@@ -10,10 +10,11 @@ import { useField } from '../hooks/use-meta';
 import { useTitleDefault } from '../hooks/use-live-title';
 import CharCount from '../components/CharCount';
 import { TITLE_RANGE, DESC_RANGE } from '../components/char-status';
-import PrimaryTermPanel from './PrimaryTermPanel';
 
 /**
- * General section (mirrors TSF): meta title, meta description, primary term.
+ * General section (mirrors TSF): meta title and meta description. The
+ * primary-term control lives in the core taxonomy panel — see
+ * `../primary-term`.
  */
 export default function GeneralPanel() {
 	const title = useField( 'title' );
@@ -76,7 +77,6 @@ export default function GeneralPanel() {
 					/>
 				</VStack>
 			) }
-			<PrimaryTermPanel />
 		</VStack>
 	);
 }

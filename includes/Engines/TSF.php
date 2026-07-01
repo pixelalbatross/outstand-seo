@@ -153,6 +153,38 @@ class TSF extends AbstractEngine {
 	}
 
 	/**
+	 * Pre-fill the primary-term controls the way TSF's own selector does. When no
+	 * primary term is stored, TSF resolves a fallback (lowest-ID assigned term,
+	 * then its deepest descendant) and seeds the control with it — and persists
+	 * that on the next save. Reuse TSF's resolver so our sidebar shows the same
+	 * default instead of "— none —"; fall back to raw meta on older cores that
+	 * lack the namespaced resolver.
+	 *
+	 * @param string $pattern  Primary-term meta key pattern (unused; TSF's
+	 *                         resolver owns the key).
+	 * @param int    $post_id  Current post ID.
+	 * @return array<string,int>
+	 */
+	protected function read_primary_terms( string $pattern, int $post_id ): array {
+
+		if ( ! class_exists( '\The_SEO_Framework\Data\Plugin\Post' ) ) {
+			return parent::read_primary_terms( $pattern, $post_id );
+		}
+
+		$terms = [];
+
+		foreach ( get_object_taxonomies( get_post_type( $post_id ) ) as $taxonomy ) {
+			if ( ! is_taxonomy_hierarchical( $taxonomy ) ) {
+				continue;
+			}
+
+			$terms[ $taxonomy ] = (int) \The_SEO_Framework\Data\Plugin\Post::get_primary_term_id( $post_id, $taxonomy );
+		}
+
+		return $terms;
+	}
+
+	/**
 	 * Build the { prefix, suffix } that wraps the live post title, mirroring how
 	 * TSF appends the blogname addition with the configured separator and
 	 * placement. Returns an empty-affix template when branding is off, so the

@@ -13,6 +13,10 @@ import VisibilityPanel from './panels/VisibilityPanel';
 import SocialPanel from './panels/SocialPanel';
 import AnalysisPanel from './analysis/AnalysisPanel';
 
+// Registers the `editor.PostTaxonomyType` filter that injects the
+// primary-term control into the core taxonomy panel (Categories, etc.).
+import './primary-term';
+
 const PLUGIN_NAME = 'outstand-seo';
 const SEO_SIDEBAR = 'outstand-seo';
 const ANALYSIS_PANEL = 'outstand-seo-analysis';
