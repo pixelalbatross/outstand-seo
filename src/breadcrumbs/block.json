@@ -1,0 +1,27 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "outstand-seo/breadcrumbs",
+	"title": "SEO Breadcrumbs",
+	"category": "theme",
+	"icon": "networking",
+	"description": "Displays a breadcrumb trail showing the current page's location.",
+	"keywords": [ "breadcrumb", "seo", "navigation" ],
+	"textdomain": "outstand-seo",
+	"supports": {
+		"html": false,
+		"align": [ "wide", "full" ],
+		"spacing": {
+			"margin": true,
+			"padding": true
+		}
+	},
+	"attributes": {
+		"home": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"editorScript": "file:./index.js",
+	"render": "file:./render.php"
+}

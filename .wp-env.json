@@ -1,0 +1,17 @@
+{
+	"core": "WordPress/WordPress#master",
+	"phpVersion": "8.2",
+	"plugins": [
+		".",
+		"https://downloads.wordpress.org/plugin/autodescription.zip",
+		"https://downloads.wordpress.org/plugin/wordpress-seo.zip"
+	],
+	"mappings": {
+		"wp-content/plugins/outstand-seo": "."
+	},
+	"config": {
+		"WP_DEBUG": true,
+		"WP_DEBUG_LOG": true,
+		"SCRIPT_DEBUG": true
+	}
+}

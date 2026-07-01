@@ -1,0 +1,42 @@
+{
+	"name": "outstand-seo",
+	"version": "1.0.0",
+	"description": "One block-editor SEO UI, powered by your engine in the background.",
+	"contributors": [
+		{
+			"name": "Sérgio Santos",
+			"homepage": "https://s3rgiosan.dev"
+		}
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/pixelalbatross/outstand-seo"
+	},
+	"license": "GPL-3.0-or-later",
+	"scripts": {
+		"start": "wp-scripts start",
+		"build": "wp-scripts build",
+		"packages-update": "wp-scripts packages-update",
+		"lint:js": "wp-scripts lint-js",
+		"lint:js:fix": "wp-scripts lint-js --fix",
+		"lint:css": "wp-scripts lint-style",
+		"format": "wp-scripts format",
+		"wp-env": "wp-env",
+		"wp-env:clean": "wp-env clean all",
+		"test:setup": "npm run wp-env start",
+		"test:unit": "wp-env run tests-cli --env-cwd='wp-content/plugins/outstand-seo' vendor/bin/phpunit --testsuite=default",
+		"test:js": "wp-scripts test-unit-js",
+		"makepot": "wp i18n make-pot . languages/outstand-seo.pot --slug=outstand-seo --exclude=vendor,node_modules,build,tests,docs"
+	},
+	"engines": {
+		"node": ">=20.0.0",
+		"npm": ">=9.0.0"
+	},
+	"devDependencies": {
+		"@wordpress/env": "^10.12.0",
+		"@wordpress/scripts": "^30.12.0"
+	},
+	"dependencies": {
+		"@10up/block-components": "^1.22.2"
+	}
+}
