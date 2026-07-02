@@ -36,10 +36,15 @@ only replaces the editing UX.
   the focus keyphrase and lightweight on-page checks (keyphrase placement,
   content / title / description length, links), scored with the WordPress admin
   status colors. Editor-only; the keyphrase persists on the engine's native key.
-- **Breadcrumbs block** (`outstand-seo/breadcrumbs`) — engine-aware: renders the
-  active engine's breadcrumb trail (`tsf_breadcrumb()` / `yoast_breadcrumb()`).
-  The matching `BreadcrumbList` schema is emitted by the engine, not duplicated
-  here.
+- **Breadcrumbs** — instead of shipping its own block, Outstand SEO overrides the
+  core **Breadcrumbs** block (`core/breadcrumbs`, WordPress 7.0+) so the stock
+  block renders the active engine's trail (`tsf_breadcrumb()` /
+  `yoast_breadcrumb()`) and its `BreadcrumbList` schema. The core block's controls
+  are honored per instance where the engine supports them (separator, show/hide
+  the home and current crumbs, front-page display, and a custom home label); a
+  per-engine capability map hides or annotates the rest. On WordPress below 7.0
+  the core block doesn't exist, so this feature is simply unavailable — the rest
+  of the plugin is unaffected.
 
 ## Supported fields
 
@@ -100,7 +105,8 @@ Adapters implement `Outstand\WP\SEO\Engines\EngineInterface` (see
 Register a new adapter in `EngineManager::candidates()`. An adapter declares:
 `is_active()`, `disable_native_editor_ui()`, `register_rest_meta()`,
 `get_js_config()` (field map + codecs + primary-term key pattern + focus-keyphrase
-key), and `get_breadcrumb_html()`.
+key), and — for breadcrumbs — `get_breadcrumb_capabilities()` and
+`get_breadcrumb_html()`.
 
 ## Changelog
 

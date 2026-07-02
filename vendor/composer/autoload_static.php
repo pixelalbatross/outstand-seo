@@ -29,6 +29,7 @@ class ComposerStaticInit839564561bba6742d1657c11534d9c45
         'Outstand\\WP\\SEO\\Assets' => __DIR__ . '/../..' . '/includes/Assets.php',
         'Outstand\\WP\\SEO\\BaseModule' => __DIR__ . '/../..' . '/includes/BaseModule.php',
         'Outstand\\WP\\SEO\\Blocks' => __DIR__ . '/../..' . '/includes/Blocks.php',
+        'Outstand\\WP\\SEO\\Blocks\\Breadcrumbs' => __DIR__ . '/../..' . '/includes/Blocks/Breadcrumbs.php',
         'Outstand\\WP\\SEO\\EditorBridge' => __DIR__ . '/../..' . '/includes/EditorBridge.php',
         'Outstand\\WP\\SEO\\Engines\\AbstractEngine' => __DIR__ . '/../..' . '/includes/Engines/AbstractEngine.php',
         'Outstand\\WP\\SEO\\Engines\\Codec\\BooleanInt' => __DIR__ . '/../..' . '/includes/Engines/Codec/BooleanInt.php',

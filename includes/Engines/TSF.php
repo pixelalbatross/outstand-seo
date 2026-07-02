@@ -135,21 +135,91 @@ class TSF extends AbstractEngine {
 	/**
 	 * {@inheritDoc}
 	 *
-	 * @param array<string,mixed> $args Block attributes.
+	 * The `the_seo_framework_breadcrumb_list` filter exposes the crumb array
+	 * before HTML, so home/current visibility can be honored alongside the
+	 * separator and home label; prefers_taxonomy stays unsupported because TSF
+	 * chooses the trail via its own logic with no per-call toggle.
+	 *
+	 * @return array<string,bool>
+	 */
+	public function get_breadcrumb_capabilities(): array {
+		return [
+			self::BREADCRUMB_SEPARATOR        => true,
+			self::BREADCRUMB_HOME             => true,
+			self::BREADCRUMB_SHOW_ON_HOME     => true,
+			self::BREADCRUMB_SHOW_HOME        => true,
+			self::BREADCRUMB_SHOW_CURRENT     => true,
+			self::BREADCRUMB_PREFERS_TAXONOMY => false,
+		];
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * Resolves the crumb list itself (rebuilding from the post ID under the REST
+	 * block-renderer, where the main query isn't singular), applies the home and
+	 * current visibility, then forces that list into tsf_breadcrumb() via a
+	 * transient the_seo_framework_breadcrumb_list filter so the engine still owns
+	 * the markup, CSS, and its own output filters.
+	 *
+	 * @param array<string,mixed> $args Normalized breadcrumb args.
 	 * @return string
 	 */
 	public function get_breadcrumb_html( array $args ): string {
 
-		if ( ! function_exists( 'tsf_breadcrumb' ) ) {
+		if ( ! function_exists( 'tsf_breadcrumb' ) || ! class_exists( '\The_SEO_Framework\Meta\Breadcrumbs' ) ) {
 			return '';
 		}
 
-		$atts = [];
-		if ( ! empty( $args['home'] ) ) {
-			$atts['home'] = $args['home'];
+		$args = $this->normalize_breadcrumb_args( $args );
+
+		if ( ! $this->should_render_breadcrumbs( $args ) ) {
+			return '';
 		}
 
-		return (string) tsf_breadcrumb( $atts );
+		// Under the REST block-renderer (editor preview) the main query isn't
+		// singular, so the query-based trail is empty — build it from the block's
+		// post ID instead. On the front end the real query drives the trail.
+		$post_id   = $args[ self::BREADCRUMB_POST_ID ];
+		$list_args = ( $post_id > 0 && defined( 'REST_REQUEST' ) && REST_REQUEST ) ? [ 'id' => $post_id ] : null;
+		$crumbs    = \The_SEO_Framework\Meta\Breadcrumbs::get_breadcrumb_list( $list_args );
+
+		if ( ! $args[ self::BREADCRUMB_SHOW_HOME ] ) {
+			array_shift( $crumbs );
+		}
+
+		if ( ! $args[ self::BREADCRUMB_SHOW_CURRENT ] && ! empty( $crumbs ) ) {
+			array_pop( $crumbs );
+		}
+
+		if ( empty( $crumbs ) ) {
+			return '';
+		}
+
+		$atts = [ 'sep' => $args[ self::BREADCRUMB_SEPARATOR ] ];
+
+		// tsf_breadcrumb() always relabels the first crumb with its 'home' att
+		// (default "Home"). Use the block's home label when the home crumb is
+		// shown; otherwise pin the att to the surviving first crumb's name so a
+		// dropped-home trail isn't mislabeled "Home".
+		$home = $args[ self::BREADCRUMB_HOME ];
+		if ( $args[ self::BREADCRUMB_SHOW_HOME ] ) {
+			if ( '' !== $home ) {
+				$atts['home'] = $home;
+			}
+		} else {
+			$atts['home'] = $crumbs[0]['name'] ?? '';
+		}
+
+		$force_list = static fn() => $crumbs;
+
+		add_filter( 'the_seo_framework_breadcrumb_list', $force_list );
+
+		$html = (string) tsf_breadcrumb( $atts );
+
+		remove_filter( 'the_seo_framework_breadcrumb_list', $force_list );
+
+		return $html;
 	}
 
 	/**

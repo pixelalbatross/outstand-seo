@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-3.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Outstand SEO 1.0.0\n"
+"Project-Id-Version: Outstand SEO 1.2.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/outstand-seo\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-01T18:17:02+00:00\n"
+"POT-Creation-Date: 2026-07-02T21:33:40+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: outstand-seo\n"
@@ -26,7 +26,7 @@ msgstr ""
 
 #. Description of the plugin
 #: plugin.php
-msgid "A modern block-editor SEO sidebar — one UI, your engine in the background."
+msgid "One block-editor SEO UI, powered by your engine in the background."
 msgstr ""
 
 #. Author of the plugin
@@ -47,16 +47,51 @@ msgstr ""
 msgid "Outstand SEO needs a supported SEO engine active: The SEO Framework or Yoast SEO."
 msgstr ""
 
-#: src/breadcrumbs/index.js:16
-msgid "Breadcrumbs"
+#: src/js/blocks/breadcrumbs/index.js:29
+msgid "The SEO Framework"
 msgstr ""
 
-#: src/breadcrumbs/index.js:18
+#: src/js/blocks/breadcrumbs/index.js:30
+msgid "Yoast SEO"
+msgstr ""
+
+#: src/js/blocks/breadcrumbs/index.js:40
+msgid "Separator"
+msgstr ""
+
+#: src/js/blocks/breadcrumbs/index.js:41
+msgid "Show home breadcrumb"
+msgstr ""
+
+#: src/js/blocks/breadcrumbs/index.js:42
+msgid "Show current breadcrumb"
+msgstr ""
+
+#: src/js/blocks/breadcrumbs/index.js:43
+msgid "Show on homepage"
+msgstr ""
+
+#: src/js/blocks/breadcrumbs/index.js:44
+msgid "Prefer taxonomy terms"
+msgstr ""
+
+#: src/js/blocks/breadcrumbs/index.js:88
+#: src/js/editor/index.js:35
+msgid "SEO"
+msgstr ""
+
+#: src/js/blocks/breadcrumbs/index.js:91
 msgid "Home label"
 msgstr ""
 
-#: src/breadcrumbs/index.js:19
-msgid "Override the first crumb label. Leave empty for the default."
+#: src/js/blocks/breadcrumbs/index.js:92
+msgid "Override the first crumb label. Leave empty for the engine default."
+msgstr ""
+
+#. translators: %1$s: active SEO engine name. %2$s: comma-separated control names.
+#: src/js/blocks/breadcrumbs/index.js:108
+#, js-format
+msgid "The following controls are not supported by %1$s: %2$s."
 msgstr ""
 
 #: src/js/editor/analysis/AnalysisPanel.js:53
@@ -117,62 +152,44 @@ msgstr ""
 msgid "%1$d / %2$d characters"
 msgstr ""
 
-#: src/js/editor/index.js:31
-msgid "SEO"
-msgstr ""
-
-#: src/js/editor/index.js:44
+#: src/js/editor/index.js:48
 msgid "General"
 msgstr ""
 
-#: src/js/editor/index.js:50
+#: src/js/editor/index.js:54
 msgid "Social"
 msgstr ""
 
-#: src/js/editor/index.js:56
+#: src/js/editor/index.js:60
 msgid "Visibility"
 msgstr ""
 
-#: src/js/editor/index.js:65
+#: src/js/editor/index.js:69
 msgid "SEO Analysis"
 msgstr ""
 
-#: src/js/editor/panels/GeneralPanel.js:29
+#: src/js/editor/panels/GeneralPanel.js:30
 msgid "Meta Title"
 msgstr ""
 
-#: src/js/editor/panels/GeneralPanel.js:33
+#: src/js/editor/panels/GeneralPanel.js:34
 msgid "Overrides the title shown for this page in search results."
 msgstr ""
 
-#: src/js/editor/panels/GeneralPanel.js:49
+#: src/js/editor/panels/GeneralPanel.js:50
 msgid "Remove the site title?"
 msgstr ""
 
-#: src/js/editor/panels/GeneralPanel.js:50
+#: src/js/editor/panels/GeneralPanel.js:51
 msgid "Enable to drop the site name and arrange the title parts yourself."
 msgstr ""
 
-#: src/js/editor/panels/GeneralPanel.js:62
+#: src/js/editor/panels/GeneralPanel.js:63
 msgid "Meta Description"
 msgstr ""
 
-#: src/js/editor/panels/GeneralPanel.js:66
+#: src/js/editor/panels/GeneralPanel.js:67
 msgid "Overrides the summary shown beneath the title in search results."
-msgstr ""
-
-#: src/js/editor/panels/PrimaryTermPanel.js:51
-msgid "— none —"
-msgstr ""
-
-#: src/js/editor/panels/PrimaryTermPanel.js:69
-msgid "The main term for this post, used by the SEO engine for breadcrumbs and links."
-msgstr ""
-
-#. translators: %s: taxonomy singular name (e.g. Category).
-#: src/js/editor/panels/PrimaryTermPanel.js:88
-#, js-format
-msgid "Primary %s"
 msgstr ""
 
 #: src/js/editor/panels/SocialPanel.js:16
@@ -355,27 +372,8 @@ msgstr ""
 msgid "Send visitors and search engines to a different URL."
 msgstr ""
 
-#: src/breadcrumbs/block.json
-msgctxt "block title"
-msgid "SEO Breadcrumbs"
-msgstr ""
-
-#: src/breadcrumbs/block.json
-msgctxt "block description"
-msgid "Displays a breadcrumb trail showing the current page's location."
-msgstr ""
-
-#: src/breadcrumbs/block.json
-msgctxt "block keyword"
-msgid "breadcrumb"
-msgstr ""
-
-#: src/breadcrumbs/block.json
-msgctxt "block keyword"
-msgid "seo"
-msgstr ""
-
-#: src/breadcrumbs/block.json
-msgctxt "block keyword"
-msgid "navigation"
+#. translators: %s: taxonomy singular name (e.g. Category).
+#: src/js/editor/primary-term.js:90
+#, js-format
+msgid "Primary %s"
 msgstr ""

@@ -45,4 +45,36 @@ class BreadcrumbTest extends \WP_UnitTestCase {
 			$this->assertSame( '', $html );
 		}
 	}
+
+	/**
+	 * TSF honors everything but the taxonomy-trail preference.
+	 *
+	 * @return void
+	 */
+	public function test_tsf_breadcrumb_capabilities(): void {
+		$caps = ( new TSF() )->get_breadcrumb_capabilities();
+
+		$this->assertTrue( $caps['separator'] );
+		$this->assertTrue( $caps['home'] );
+		$this->assertTrue( $caps['show_on_home'] );
+		$this->assertTrue( $caps['show_home'] );
+		$this->assertTrue( $caps['show_current'] );
+		$this->assertFalse( $caps['prefers_taxonomy'] );
+	}
+
+	/**
+	 * Yoast honors everything but the taxonomy-trail preference.
+	 *
+	 * @return void
+	 */
+	public function test_yoast_breadcrumb_capabilities(): void {
+		$caps = ( new Yoast() )->get_breadcrumb_capabilities();
+
+		$this->assertTrue( $caps['separator'] );
+		$this->assertTrue( $caps['show_home'] );
+		$this->assertTrue( $caps['show_current'] );
+		$this->assertTrue( $caps['home'] );
+		$this->assertTrue( $caps['show_on_home'] );
+		$this->assertFalse( $caps['prefers_taxonomy'] );
+	}
 }

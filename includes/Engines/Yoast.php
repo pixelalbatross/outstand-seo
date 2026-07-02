@@ -176,11 +176,31 @@ class Yoast extends AbstractEngine {
 	/**
 	 * {@inheritDoc}
 	 *
-	 * Yoast renders breadcrumbs from its own options (home label, separator,
-	 * enabled state), so block attributes are not forwarded. Returns '' when
-	 * Yoast breadcrumbs are disabled.
+	 * Yoast exposes runtime filters over its crumb list and separator, so every
+	 * arg but prefers_taxonomy (whose trail rebuild is too fragile) can be
+	 * honored per block instance.
 	 *
-	 * @param array<string,mixed> $args Block attributes (unused).
+	 * @return array<string,bool>
+	 */
+	public function get_breadcrumb_capabilities(): array {
+		return [
+			self::BREADCRUMB_SEPARATOR        => true,
+			self::BREADCRUMB_SHOW_HOME        => true,
+			self::BREADCRUMB_SHOW_CURRENT     => true,
+			self::BREADCRUMB_HOME             => true,
+			self::BREADCRUMB_SHOW_ON_HOME     => true,
+			self::BREADCRUMB_PREFERS_TAXONOMY => false,
+		];
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * Wraps yoast_breadcrumb() in transient filters that apply the block's
+	 * separator, home label, and home/current visibility, then removes them so
+	 * the overrides never leak into other breadcrumb calls.
+	 *
+	 * @param array<string,mixed> $args Normalized breadcrumb args.
 	 * @return string
 	 */
 	public function get_breadcrumb_html( array $args ): string {
@@ -188,7 +208,44 @@ class Yoast extends AbstractEngine {
 			return '';
 		}
 
-		return (string) yoast_breadcrumb( '', '', false );
+		$args = $this->normalize_breadcrumb_args( $args );
+
+		if ( ! $this->should_render_breadcrumbs( $args ) ) {
+			return '';
+		}
+
+		$separator = static fn() => $args[ self::BREADCRUMB_SEPARATOR ];
+
+		$links = static function ( $crumbs ) use ( $args ) {
+			if ( ! is_array( $crumbs ) || empty( $crumbs ) ) {
+				return $crumbs;
+			}
+
+			$home = $args[ self::BREADCRUMB_HOME ];
+			if ( '' !== $home && isset( $crumbs[0]['text'] ) ) {
+				$crumbs[0]['text'] = $home;
+			}
+
+			if ( ! $args[ self::BREADCRUMB_SHOW_HOME ] ) {
+				array_shift( $crumbs );
+			}
+
+			if ( ! $args[ self::BREADCRUMB_SHOW_CURRENT ] && ! empty( $crumbs ) ) {
+				array_pop( $crumbs );
+			}
+
+			return $crumbs;
+		};
+
+		add_filter( 'wpseo_breadcrumb_separator', $separator );
+		add_filter( 'wpseo_breadcrumb_links', $links );
+
+		$html = (string) yoast_breadcrumb( '', '', false );
+
+		remove_filter( 'wpseo_breadcrumb_separator', $separator );
+		remove_filter( 'wpseo_breadcrumb_links', $links );
+
+		return $html;
 	}
 
 	/**

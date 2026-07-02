@@ -36,6 +36,7 @@ class Plugin {
 			new EditorBridge(),
 			new Assets(),
 			new Blocks(),
+			new Blocks\Breadcrumbs(),
 		];
 
 		foreach ( $modules as $module ) {

@@ -168,6 +168,24 @@ abstract class AbstractEngine implements EngineInterface {
 	/**
 	 * {@inheritDoc}
 	 *
+	 * Base engines honor nothing; concrete engines override with what they map.
+	 *
+	 * @return array<string,bool>
+	 */
+	public function get_breadcrumb_capabilities(): array {
+		return [
+			self::BREADCRUMB_SEPARATOR        => false,
+			self::BREADCRUMB_SHOW_HOME        => false,
+			self::BREADCRUMB_SHOW_CURRENT     => false,
+			self::BREADCRUMB_PREFERS_TAXONOMY => false,
+			self::BREADCRUMB_SHOW_ON_HOME     => false,
+			self::BREADCRUMB_HOME             => false,
+		];
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
 	 * Registers every native key referenced by the field map (deduped) and the
 	 * per-taxonomy primary-term keys as post meta, without `show_in_rest` — the
 	 * editor reads/writes the canonical `outstand_seo` REST field instead.
@@ -238,6 +256,40 @@ abstract class AbstractEngine implements EngineInterface {
 				);
 			}
 		}
+	}
+
+	/**
+	 * Merge caller args over canonical breadcrumb defaults and cast to the
+	 * expected types, so concrete engines can trust the shape.
+	 *
+	 * @param array<string,mixed> $args Raw block args.
+	 * @return array<string,mixed> Normalized args.
+	 */
+	protected function normalize_breadcrumb_args( array $args ): array {
+		return [
+			self::BREADCRUMB_SEPARATOR        => (string) ( $args[ self::BREADCRUMB_SEPARATOR ] ?? '/' ),
+			self::BREADCRUMB_SHOW_HOME        => (bool) ( $args[ self::BREADCRUMB_SHOW_HOME ] ?? true ),
+			self::BREADCRUMB_SHOW_CURRENT     => (bool) ( $args[ self::BREADCRUMB_SHOW_CURRENT ] ?? true ),
+			self::BREADCRUMB_PREFERS_TAXONOMY => (bool) ( $args[ self::BREADCRUMB_PREFERS_TAXONOMY ] ?? false ),
+			self::BREADCRUMB_SHOW_ON_HOME     => (bool) ( $args[ self::BREADCRUMB_SHOW_ON_HOME ] ?? false ),
+			self::BREADCRUMB_HOME             => (string) ( $args[ self::BREADCRUMB_HOME ] ?? '' ),
+			self::BREADCRUMB_POST_ID          => (int) ( $args[ self::BREADCRUMB_POST_ID ] ?? 0 ),
+		];
+	}
+
+	/**
+	 * Whether the trail should render in the current request, honoring the
+	 * show_on_home arg on the front page.
+	 *
+	 * @param array<string,mixed> $args Normalized breadcrumb args.
+	 * @return bool
+	 */
+	protected function should_render_breadcrumbs( array $args ): bool {
+		if ( is_front_page() && empty( $args[ self::BREADCRUMB_SHOW_ON_HOME ] ) ) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**

@@ -10,5 +10,9 @@ module.exports = {
 			? defaultConfig.entry()
 			: defaultConfig.entry),
 		'js/editor': path.resolve(__dirname, 'src/js/editor/index.js'),
+		'js/breadcrumbs': path.resolve(
+			__dirname,
+			'src/js/blocks/breadcrumbs/index.js'
+		),
 	},
 };

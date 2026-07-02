@@ -10,6 +10,7 @@ return array(
     'Outstand\\WP\\SEO\\Assets' => $baseDir . '/includes/Assets.php',
     'Outstand\\WP\\SEO\\BaseModule' => $baseDir . '/includes/BaseModule.php',
     'Outstand\\WP\\SEO\\Blocks' => $baseDir . '/includes/Blocks.php',
+    'Outstand\\WP\\SEO\\Blocks\\Breadcrumbs' => $baseDir . '/includes/Blocks/Breadcrumbs.php',
     'Outstand\\WP\\SEO\\EditorBridge' => $baseDir . '/includes/EditorBridge.php',
     'Outstand\\WP\\SEO\\Engines\\AbstractEngine' => $baseDir . '/includes/Engines/AbstractEngine.php',
     'Outstand\\WP\\SEO\\Engines\\Codec\\BooleanInt' => $baseDir . '/includes/Engines/Codec/BooleanInt.php',

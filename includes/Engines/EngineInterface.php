@@ -18,6 +18,21 @@ namespace Outstand\WP\SEO\Engines;
 interface EngineInterface {
 
 	/**
+	 * Canonical breadcrumb arg keys passed to get_breadcrumb_html() and reported
+	 * by get_breadcrumb_capabilities(). The block maps core/breadcrumbs
+	 * attributes onto these engine-neutral keys.
+	 *
+	 * @var string
+	 */
+	public const BREADCRUMB_SEPARATOR         = 'separator';
+	public const BREADCRUMB_SHOW_HOME         = 'show_home';
+	public const BREADCRUMB_SHOW_CURRENT      = 'show_current';
+	public const BREADCRUMB_PREFERS_TAXONOMY  = 'prefers_taxonomy';
+	public const BREADCRUMB_SHOW_ON_HOME      = 'show_on_home';
+	public const BREADCRUMB_HOME              = 'home';
+	public const BREADCRUMB_POST_ID           = 'post_id';
+
+	/**
 	 * Stable engine slug (e.g. "tsf", "yoast").
 	 *
 	 * @return string
@@ -120,9 +135,26 @@ interface EngineInterface {
 	public function get_editor_defaults( int $post_id ): array;
 
 	/**
+	 * Which normalized breadcrumb args this engine can actually honor.
+	 *
+	 * Canonical arg key (see the BREADCRUMB_* constants) => bool. The editor hides the
+	 * controls an active engine reports false for, so users never see a knob
+	 * that silently no-ops.
+	 *
+	 * @return array<string,bool>
+	 */
+	public function get_breadcrumb_capabilities(): array;
+
+	/**
 	 * Rendered breadcrumb trail HTML for the active engine, or '' if none.
 	 *
-	 * @param array<string,mixed> $args Block attributes (e.g. home label).
+	 * @param array<string,mixed> $args Normalized breadcrumb args. Keys:
+	 *  - separator        (string) Trail separator.
+	 *  - show_home        (bool)   Include the home crumb.
+	 *  - show_current     (bool)   Include the current-page crumb.
+	 *  - prefers_taxonomy (bool)   Prefer a taxonomy trail over hierarchy.
+	 *  - show_on_home     (bool)   Render on the front page.
+	 *  - home             (string) Override label for the home crumb.
 	 * @return string
 	 */
 	public function get_breadcrumb_html( array $args ): string;
