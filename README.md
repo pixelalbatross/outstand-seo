@@ -46,6 +46,32 @@ only replaces the editing UX.
   the core block doesn't exist, so this feature is simply unavailable — the rest
   of the plugin is unaffected.
 
+- **Structured data** — adds nodes to the active engine's JSON-LD graph, so a
+  page keeps one graph. Hook `outstand_seo_schema_nodes` and return the nodes to
+  add; the second argument maps `Organization`, `Person`, `WebSite` and `WebPage`
+  to the engine's `@id` references for those entities:
+
+  ```php
+  add_filter(
+  	'outstand_seo_schema_nodes',
+  	function ( array $nodes, array $references ): array {
+  		if ( is_singular( 'event' ) ) {
+  			$nodes[] = [
+  				'@type'     => 'Event',
+  				'name'      => get_the_title(),
+  				'organizer' => $references['Organization'] ?? [],
+  			];
+  		}
+
+  		return $nodes;
+  	},
+  	10,
+  	2
+  );
+  ```
+
+  A node needs a `@type`; one whose `@id` the graph already holds is dropped.
+
 ## Supported fields
 
 Fourteen canonical fields (title, description, canonical, robots
@@ -105,8 +131,8 @@ Adapters implement `Outstand\WP\SEO\Engines\EngineInterface` (see
 Register a new adapter in `EngineManager::candidates()`. An adapter declares:
 `is_active()`, `disable_native_editor_ui()`, `register_rest_meta()`,
 `get_js_config()` (field map + codecs + primary-term key pattern + focus-keyphrase
-key), and — for breadcrumbs — `get_breadcrumb_capabilities()` and
-`get_breadcrumb_html()`.
+key), for breadcrumbs `get_breadcrumb_capabilities()` and
+`get_breadcrumb_html()`, and for structured data `get_schema_graph_filter()`.
 
 ## Changelog
 

@@ -49,6 +49,7 @@ class ComposerStaticInit839564561bba6742d1657c11534d9c45
         'Outstand\\WP\\SEO\\GetAssetInfo' => __DIR__ . '/../..' . '/includes/GetAssetInfo.php',
         'Outstand\\WP\\SEO\\Plugin' => __DIR__ . '/../..' . '/includes/Plugin.php',
         'Outstand\\WP\\SEO\\PostTypes' => __DIR__ . '/../..' . '/includes/PostTypes.php',
+        'Outstand\\WP\\SEO\\Schema\\Graph' => __DIR__ . '/../..' . '/includes/Schema/Graph.php',
     );
 
     public static function getInitializer(ClassLoader $loader)

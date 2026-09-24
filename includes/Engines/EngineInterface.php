@@ -158,4 +158,12 @@ interface EngineInterface {
 	 * @return string
 	 */
 	public function get_breadcrumb_html( array $args ): string;
+
+	/**
+	 * Name of the filter through which the engine passes its JSON-LD graph (a list of
+	 * entity arrays) before printing it, or '' when the engine has none.
+	 *
+	 * @return string
+	 */
+	public function get_schema_graph_filter(): string;
 }

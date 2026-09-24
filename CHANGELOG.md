@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Structured data: the `outstand_seo_schema_nodes` filter adds nodes to the
+  active engine's JSON-LD graph (The SEO Framework or Yoast SEO), with `@id`
+  references to the engine's Organization, Person, WebSite and WebPage entities.
+  Untyped nodes and nodes restating an `@id` already in the graph are dropped.
+- `EngineInterface::get_schema_graph_filter()`, naming the filter an engine's
+  graph passes through.
+
 ## [1.2.0] - 2026-07-02
 
 ### Changed

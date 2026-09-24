@@ -195,6 +195,13 @@ class Yoast extends AbstractEngine {
 
 	/**
 	 * {@inheritDoc}
+	 */
+	public function get_schema_graph_filter(): string {
+		return 'wpseo_schema_graph';
+	}
+
+	/**
+	 * {@inheritDoc}
 	 *
 	 * Wraps yoast_breadcrumb() in transient filters that apply the block's
 	 * separator, home label, and home/current visibility, then removes them so

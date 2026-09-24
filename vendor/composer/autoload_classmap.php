@@ -30,4 +30,5 @@ return array(
     'Outstand\\WP\\SEO\\GetAssetInfo' => $baseDir . '/includes/GetAssetInfo.php',
     'Outstand\\WP\\SEO\\Plugin' => $baseDir . '/includes/Plugin.php',
     'Outstand\\WP\\SEO\\PostTypes' => $baseDir . '/includes/PostTypes.php',
+    'Outstand\\WP\\SEO\\Schema\\Graph' => $baseDir . '/includes/Schema/Graph.php',
 );

@@ -155,6 +155,13 @@ class TSF extends AbstractEngine {
 
 	/**
 	 * {@inheritDoc}
+	 */
+	public function get_schema_graph_filter(): string {
+		return 'the_seo_framework_schema_graph_data';
+	}
+
+	/**
+	 * {@inheritDoc}
 	 *
 	 * Resolves the crumb list itself (rebuilding from the post ID under the REST
 	 * block-renderer, where the main query isn't singular), applies the home and

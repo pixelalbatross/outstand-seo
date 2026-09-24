@@ -37,6 +37,7 @@ class Plugin {
 			new Assets(),
 			new Blocks(),
 			new Blocks\Breadcrumbs(),
+			new Schema\Graph(),
 		];
 
 		foreach ( $modules as $module ) {

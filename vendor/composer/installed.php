@@ -3,7 +3,7 @@
         'name' => 'outstand/seo',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'e85665663795d2b3d2aa5ffd4c8dc76620a7fc51',
+        'reference' => '99dee6b8047d0c9b8aeb2e9b78b2f54451c1d9e4',
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         'outstand/seo' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'e85665663795d2b3d2aa5ffd4c8dc76620a7fc51',
+            'reference' => '99dee6b8047d0c9b8aeb2e9b78b2f54451c1d9e4',
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
