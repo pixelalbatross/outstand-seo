@@ -70,7 +70,11 @@ class Assets extends BaseModule {
 
 		$post = get_post();
 		if ( $post instanceof \WP_Post ) {
-			$config['defaults'] = $engine->get_editor_defaults( $post->ID );
+			// The editor opens an auto-draft with this request's post title (empty
+			// or the `default_title` result), while the stored one is "Auto Draft".
+			$edits = 'auto-draft' === $post->post_status ? [ 'postTitle' => $post->post_title ] : [];
+
+			$config['defaults'] = $engine->get_editor_defaults( $post->ID, $edits );
 		}
 
 		wp_add_inline_script(

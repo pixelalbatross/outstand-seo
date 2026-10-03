@@ -63,6 +63,38 @@ class AssetsTest extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * An auto-draft's defaults render the title the editor opens it with.
+	 *
+	 * @return void
+	 */
+	public function test_auto_draft_defaults_use_editor_title(): void {
+		set_current_screen( 'post' );
+
+		$GLOBALS['post'] = get_post(
+			self::factory()->post->create(
+				[
+					'post_title'  => 'Auto Draft',
+					'post_status' => 'auto-draft',
+				]
+			)
+		);
+
+		$GLOBALS['post']->post_title = 'Editor Title';
+
+		$assets = new Assets();
+		$assets->register();
+		$assets->enqueue_editor_assets();
+
+		$inline = implode( '', (array) wp_scripts()->get_data( Assets::HANDLE, 'before' ) );
+		$config = json_decode( (string) preg_replace( '/^window\.outstandSeo = (.*);$/s', '$1', $inline ), true );
+
+		unset( $GLOBALS['post'] );
+
+		$this->assertStringStartsWith( 'Editor Title', $config['defaults']['values']['title'] );
+	}
+
+
+	/**
 	 * Skips the enqueue when the screen's post type is filtered out.
 	 *
 	 * @return void
