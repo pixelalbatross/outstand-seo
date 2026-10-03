@@ -5,6 +5,26 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- The SEO sidebar shows, as each empty field's placeholder, the title or
+  description the active engine renders for the post's unsaved state. The
+  engine computes it with its own code (The SEO Framework's generators, Yoast
+  SEO's post builder and presenters) through the new
+  `POST outstand-seo/v1/defaults/{id}` REST route, shortly after each edit and
+  after each save.
+
+### Fixed
+
+- Open Graph and Twitter titles and descriptions show the engine's fallbacks:
+  the edited meta title and description, Yoast SEO social templates, and the
+  excerpt.
+- Yoast SEO: new posts show defaults before their first save.
+- The SEO Framework: the Twitter description renders when Open Graph output is
+  off.
+
 ## [1.3.1] - 2026-10-03
 
 ### Fixed

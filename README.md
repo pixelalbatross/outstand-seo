@@ -31,7 +31,9 @@ only replaces the editing UX.
   `@wordpress/components`; each control renders only when the active engine
   supports that field (config localized as `window.outstandSeo`). Fields write
   the active engine's **native** post meta directly, so the engine renders the
-  frontend unchanged — no duplicated data, no sync.
+  frontend unchanged — no duplicated data, no sync. Empty fields show the title
+  or description the engine renders for the post's unsaved state as their
+  placeholder, computed by the engine through `POST outstand-seo/v1/defaults/{id}`.
 - **SEO Analysis panel** — a document panel in the default Settings sidebar with
   the focus keyphrase and lightweight on-page checks (keyphrase placement,
   content / title / description length, links), scored with the WordPress admin
