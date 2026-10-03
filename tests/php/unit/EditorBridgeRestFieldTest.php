@@ -115,6 +115,28 @@ class EditorBridgeRestFieldTest extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Values saved through the field keep their backslashes.
+	 *
+	 * @return void
+	 */
+	public function test_update_callback_keeps_backslashes(): void {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'editor' ] ) );
+
+		$description = 'Install to C:\\Example\\Path';
+
+		call_user_func(
+			$this->field_args()['update_callback'],
+			[ 'description' => $description ],
+			get_post( $this->post_id )
+		);
+
+		$this->assertSame(
+			$description,
+			EngineManager::get_active()->normalize( $this->post_id )['description']
+		);
+	}
+
+	/**
 	 * The update_callback denies a user who cannot edit the post.
 	 *
 	 * @return void

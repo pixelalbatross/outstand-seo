@@ -35,18 +35,6 @@ class TsfemFocusCodecTest extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Simulate the value get_post_meta() returns after WP stores encode()'s
-	 * output: WP unslashes, re-serializes, then unwraps one layer on read —
-	 * net effect is stripslashes() of the encoded string.
-	 *
-	 * @param string $stored Encoded (addslashed-serialized) value.
-	 * @return string
-	 */
-	private function read_back( string $stored ): string {
-		return stripslashes( $stored );
-	}
-
-	/**
 	 * First write into an empty blob creates the keyword slot and reads back.
 	 *
 	 * @return void
@@ -54,9 +42,9 @@ class TsfemFocusCodecTest extends \WP_UnitTestCase {
 	public function test_write_and_read_on_empty_blob(): void {
 		$stored = $this->codec->encode( 'my keyword', '' );
 
-		$this->assertSame( 'my keyword', $this->codec->decode( $this->read_back( $stored ) ) );
+		$this->assertSame( 'my keyword', $this->codec->decode( $stored ) );
 
-		$blob = unserialize( $this->read_back( $stored ) ); // phpcs:ignore
+		$blob = unserialize( $stored ); // phpcs:ignore
 		$this->assertSame( 'my keyword', $blob['focus']['kw'][0]['keyword'] );
 		$this->assertSame( 0, $blob['focus']['kw'][0]['score'] );
 	}
@@ -100,9 +88,9 @@ class TsfemFocusCodecTest extends \WP_UnitTestCase {
 		$current = serialize( $existing ); // phpcs:ignore
 
 		$stored = $this->codec->encode( 'new kw', $current );
-		$blob   = unserialize( $this->read_back( $stored ) ); // phpcs:ignore
+		$blob   = unserialize( $stored ); // phpcs:ignore
 
-		$this->assertSame( 'new kw', $this->codec->decode( $this->read_back( $stored ) ) );
+		$this->assertSame( 'new kw', $this->codec->decode( $stored ) );
 		$this->assertSame( 'keep me', $blob['local']['data'], 'other extension preserved' );
 		$this->assertSame( 'second slot', $blob['focus']['kw'][1]['keyword'], 'other kw slot preserved' );
 		$this->assertSame( 'new kw', $blob['focus']['kw'][0]['keyword'] );
@@ -130,7 +118,7 @@ class TsfemFocusCodecTest extends \WP_UnitTestCase {
 		$current = serialize( $existing ); // phpcs:ignore
 
 		$stored = $this->codec->encode( 'same kw', $current );
-		$blob   = unserialize( $this->read_back( $stored ) ); // phpcs:ignore
+		$blob   = unserialize( $stored ); // phpcs:ignore
 
 		$this->assertSame( 87, $blob['focus']['kw'][0]['score'] );
 	}

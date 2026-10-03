@@ -53,4 +53,34 @@ class FocusFieldDetectionTest extends \WP_UnitTestCase {
 		$this->assertSame( '_tsfem-extension-post-meta', $field['key'] );
 		$this->assertInstanceOf( TsfemFocus::class, $field['codec'] );
 	}
+
+	/**
+	 * The Focus extension's blob is stored as the plain serialized array TSFEM
+	 * reads, with the keyword's backslashes and the other extensions' data
+	 * intact. Runs isolated so the defined constant doesn't leak.
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 * @return void
+	 */
+	public function test_focus_extension_blob_storage(): void {
+		if ( ! defined( 'TSFEM_E_FOCUS_VERSION' ) ) {
+			define( 'TSFEM_E_FOCUS_VERSION', '1.6.0' );
+		}
+
+		$post_id = self::factory()->post->create();
+		$keyword = 'C:\\Example "keyword"';
+
+		update_post_meta( $post_id, '_tsfem-extension-post-meta', wp_slash( serialize( [ 'local' => [ 'data' => 'keep me' ] ] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- TSFEM's storage format.
+
+		$engine = new TSF();
+		$engine->denormalize( [ 'focusKw' => $keyword ], $post_id );
+
+		$stored = get_post_meta( $post_id, '_tsfem-extension-post-meta', true );
+		$blob   = unserialize( $stored ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize -- TSFEM's storage format.
+
+		$this->assertSame( $keyword, $blob['focus']['kw'][0]['keyword'] );
+		$this->assertSame( 'keep me', $blob['local']['data'] );
+		$this->assertSame( $keyword, $engine->normalize( $post_id )['focusKw'] );
+	}
 }

@@ -57,8 +57,10 @@ abstract class AbstractEngine implements EngineInterface {
 	public function denormalize( array $canonical, int $post_id ): void {
 		$writes = $this->to_native( $canonical, $post_id );
 
+		// update_post_meta() unslashes its input, so slashing keeps backslashes
+		// in the stored value.
 		foreach ( $writes as $key => $value ) {
-			update_post_meta( $post_id, $key, $value );
+			update_post_meta( $post_id, $key, wp_slash( $value ) );
 		}
 
 		$pattern = $this->get_primary_term_key_pattern();
@@ -272,7 +274,7 @@ abstract class AbstractEngine implements EngineInterface {
 	/**
 	 * Run a callback while the post's meta reads return the edited canonical
 	 * values, so the engine computes its output from the unsaved editor state.
-	 * Each value is unslashed and sanitized the way saving it would store it.
+	 * Each value is sanitized the way saving it would store it.
 	 *
 	 * @param int                 $post_id  Post ID.
 	 * @param array<string,mixed> $values   Edited canonical values.
@@ -285,7 +287,7 @@ abstract class AbstractEngine implements EngineInterface {
 		$reading   = false;
 
 		foreach ( $this->to_native( $values, $post_id ) as $key => $value ) {
-			$native[ $key ] = (string) sanitize_meta( $key, wp_unslash( $value ), 'post', $post_type );
+			$native[ $key ] = (string) sanitize_meta( $key, $value, 'post', $post_type );
 		}
 
 		$overlay = static function ( $value, $object_id, $meta_key ) use ( $post_id, $native, &$reading ) {

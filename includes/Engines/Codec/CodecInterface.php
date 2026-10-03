@@ -28,7 +28,7 @@ interface CodecInterface {
 	 * @param mixed $value   Canonical value.
 	 * @param mixed $current Current native value (for keys shared by several
 	 *                       fields, e.g. a CSV token list).
-	 * @return mixed Native value to store.
+	 * @return mixed Native value as stored in post meta (unslashed).
 	 */
 	public function encode( $value, $current );
 

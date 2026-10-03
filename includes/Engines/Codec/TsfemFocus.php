@@ -33,7 +33,7 @@ class TsfemFocus implements CodecInterface {
 	 *
 	 * @param mixed $value   New focus keyword.
 	 * @param mixed $current Current native blob value.
-	 * @return string TSFEM-serialized blob (addslashes(serialize()), as TSFEM stores it).
+	 * @return string TSFEM-serialized blob, as stored in post meta.
 	 */
 	public function encode( $value, $current ) {
 		$keyword = (string) $value;
@@ -59,7 +59,7 @@ class TsfemFocus implements CodecInterface {
 		unset( $slot );
 
 		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- Must match TSFEM's exact storage format for interop.
-		return addslashes( serialize( $blob ) );
+		return serialize( $blob );
 	}
 
 	/**

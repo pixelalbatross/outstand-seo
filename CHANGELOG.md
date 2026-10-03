@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Yoast SEO: new posts show defaults before their first save.
 - The SEO Framework: the Twitter description renders when Open Graph output is
   off.
+- SEO fields keep backslashes on save (e.g. `C:\path`).
 
 ## [1.3.1] - 2026-10-03
 

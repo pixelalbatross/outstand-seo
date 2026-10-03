@@ -56,6 +56,20 @@ class TsfNormalizationTest extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Saved strings keep their backslashes and quotes.
+	 *
+	 * @return void
+	 */
+	public function test_saved_strings_keep_backslashes(): void {
+		$title = 'C:\\Example\\Path \\o/ \\"quoted\\" it\'s';
+
+		$this->engine->denormalize( [ 'title' => $title ], $this->post_id );
+
+		$this->assertSame( $title, get_post_meta( $this->post_id, '_genesis_title', true ) );
+		$this->assertSame( $title, $this->engine->normalize( $this->post_id )['title'] );
+	}
+
+	/**
 	 * TSF robots tri-state maps -1/0/1 <-> on/default/off.
 	 *
 	 * @return void

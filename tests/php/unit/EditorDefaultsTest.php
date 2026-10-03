@@ -132,6 +132,39 @@ class EditorDefaultsTest extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Edited values with backslashes render as each engine outputs them: TSF
+	 * keeps them, and Yoast's description presenters strip them.
+	 *
+	 * @dataProvider backslash_provider
+	 *
+	 * @param string $engine_class Engine class name.
+	 * @param string $expected     Rendered Open Graph description.
+	 * @return void
+	 */
+	public function test_edited_values_render_backslashes( string $engine_class, string $expected ): void {
+		$engine = 'tsf' === $engine_class ? $this->tsf() : $this->yoast();
+		$values = $engine->get_editor_defaults(
+			$this->create_post(),
+			[ 'values' => [ 'description' => 'Install to C:\\Example\\Path' ] ]
+		)['values'];
+
+		$this->assertSame( $expected, $values['ogDescription'] );
+	}
+
+	/**
+	 * Engines and the Open Graph description each renders for a backslashed
+	 * description.
+	 *
+	 * @return array<string,array{string,string}>
+	 */
+	public function backslash_provider(): array {
+		return [
+			'tsf'   => [ 'tsf', 'Install to C:\\Example\\Path' ],
+			'yoast' => [ 'yoast', 'Install to C:ExamplePath' ],
+		];
+	}
+
+	/**
 	 * Engines for the engine-agnostic tests.
 	 *
 	 * @return array<string,array{string}>
