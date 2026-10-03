@@ -25,6 +25,9 @@
 		"wp-env:clean": "wp-env clean all",
 		"test:setup": "npm run wp-env start",
 		"test:unit": "wp-env run tests-cli --env-cwd='wp-content/plugins/outstand-seo' vendor/bin/phpunit --testsuite=default",
+		"test:unit:tsf": "wp-env run tests-cli --env-cwd='wp-content/plugins/outstand-seo' env OUTSTAND_SEO_TEST_ENGINE=tsf vendor/bin/phpunit --testsuite=default",
+		"test:unit:yoast": "wp-env run tests-cli --env-cwd='wp-content/plugins/outstand-seo' env OUTSTAND_SEO_TEST_ENGINE=yoast vendor/bin/phpunit --testsuite=default",
+		"test:unit:all": "npm run test:unit && npm run test:unit:tsf && npm run test:unit:yoast",
 		"test:js": "wp-scripts test-unit-js",
 		"makepot": "wp i18n make-pot . languages/outstand-seo.pot --slug=outstand-seo --exclude=vendor,node_modules,build,tests,docs"
 	},
