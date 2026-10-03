@@ -114,7 +114,7 @@ class TSF extends AbstractEngine {
 
 		$args = [ 'id' => $post_id ];
 
-		$title       = \The_SEO_Framework\Meta\Title::get_bare_generated_title( $args );
+		$title       = \The_SEO_Framework\Meta\Title::get_generated_title( $args );
 		$description = \The_SEO_Framework\Meta\Description::get_generated_description( $args );
 
 		$values = [
@@ -262,37 +262,45 @@ class TSF extends AbstractEngine {
 	}
 
 	/**
-	 * Build the { prefix, suffix } that wraps the live post title, mirroring how
-	 * TSF appends the blogname addition with the configured separator and
-	 * placement. Returns an empty-affix template when branding is off, so the
-	 * title still tracks the live post title.
+	 * Build the { prefix, suffix } that wraps the live post title, so the title
+	 * tracks the post title as the user types.
+	 *
+	 * The title is generated with a placeholder for the post title and split on
+	 * it, so the affixes keep anything a filter, the protection status or the
+	 * blogname addition puts around the post title. `untitled` wraps "Untitled",
+	 * which TSF uses when the post has no title.
+	 *
+	 * Returns null when the generated title has no post title in it, such as a
+	 * static front page or a filter that replaces the whole title, in which case
+	 * the editor shows the static snapshot.
 	 *
 	 * @param array<string,mixed> $args TSF generator args (e.g. [ 'id' => 123 ]).
-	 * @return array{prefix:string,suffix:string}
+	 * @return array{prefix:string,suffix:string,untitled:string}|null
 	 */
-	private function build_title_template( array $args ): array {
-		$addition = $this->decode_entities( \The_SEO_Framework\Meta\Title::get_addition() );
+	private function build_title_template( array $args ): ?array {
+		$post_id         = (int) ( $args['id'] ?? 0 );
+		$use_placeholder = static fn( $title, $post ) => (int) ( $post->ID ?? 0 ) === $post_id ? self::TITLE_PLACEHOLDER : $title;
 
-		if ( ! \The_SEO_Framework\Meta\Title\Conditions::use_branding( $args ) || '' === $addition ) {
-			return [
-				'prefix' => '',
-				'suffix' => '',
-			];
+		add_filter( 'single_post_title', $use_placeholder, PHP_INT_MAX, 2 );
+
+		// The extra arg keeps TSF's memoized title for these args apart from the real one.
+		$title = \The_SEO_Framework\Meta\Title::get_generated_title( $args + [ self::TITLE_PLACEHOLDER => true ] );
+
+		remove_filter( 'single_post_title', $use_placeholder, PHP_INT_MAX );
+
+		$parts      = explode( self::TITLE_PLACEHOLDER, $this->decode_entities( $title ), 2 );
+		$part_count = count( $parts );
+
+		if ( 2 !== $part_count ) {
+			return null;
 		}
 
-		$separator = $this->decode_entities( \The_SEO_Framework\Meta\Title::get_separator() );
-		$location  = \The_SEO_Framework\Meta\Title::get_addition_location();
-
-		if ( 'left' === $location ) {
-			return [
-				'prefix' => "{$addition} {$separator} ",
-				'suffix' => '',
-			];
-		}
+		$untitled = $this->decode_entities( \The_SEO_Framework\Meta\Title::get_untitled_title() );
 
 		return [
-			'prefix' => '',
-			'suffix' => " {$separator} {$addition}",
+			'prefix'   => $parts[0],
+			'suffix'   => $parts[1],
+			'untitled' => $parts[0] . $untitled . $parts[1],
 		];
 	}
 

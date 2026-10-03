@@ -126,8 +126,10 @@ interface EngineInterface {
 	 * Shape:
 	 *  - values        (array)      canonical field => generated default string.
 	 *  - titleTemplate (array|null) { prefix, suffix } wrapping the live post
-	 *                               title for real-time title reassembly, or
-	 *                               null to use the static `values['title']`.
+	 *                               title for real-time title reassembly, plus
+	 *                               `untitled`, the title of a post with no
+	 *                               title; or null to use the static
+	 *                               `values['title']`.
 	 *
 	 * @param int $post_id Current post ID.
 	 * @return array<string,mixed>

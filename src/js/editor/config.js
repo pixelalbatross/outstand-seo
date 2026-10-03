@@ -30,7 +30,8 @@ export const DEFAULTS = cfg.defaults?.values || {};
 
 /**
  * { prefix, suffix } wrapping the live post title for real-time title
- * reassembly, or null when the engine has no live template (static snapshot).
+ * reassembly, plus `untitled`, the title of a post with no title; or null when
+ * the engine has no live template (static snapshot).
  */
 export const TITLE_TEMPLATE = cfg.defaults?.titleTemplate || null;
 

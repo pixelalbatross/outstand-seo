@@ -133,9 +133,10 @@ class Yoast extends AbstractEngine {
 	 * {@inheritDoc}
 	 *
 	 * Resolves Yoast's per-post-type title/description templates through
-	 * `wpseo_replace_vars`, and derives the live title template by splitting the
-	 * title format on the `%%title%%` variable. Social defaults fall back to the
-	 * SEO title/description, mirroring Yoast's own frontend fallback chain.
+	 * `wpseo_replace_vars`, and runs the SEO title through `wpseo_title` the way
+	 * Yoast's title presenter does. Social defaults fall back to the unfiltered
+	 * SEO title and the description, mirroring Yoast's own frontend fallback
+	 * chain.
 	 *
 	 * @param int $post_id Current post ID.
 	 * @return array<string,mixed>
@@ -155,11 +156,12 @@ class Yoast extends AbstractEngine {
 		$title_format = (string) \WPSEO_Options::get( "title-{$post_type}", '' );
 		$desc_format  = (string) \WPSEO_Options::get( "metadesc-{$post_type}", '' );
 
-		$title       = wpseo_replace_vars( $title_format, $post );
-		$description = wpseo_replace_vars( $desc_format, $post );
+		$presentation = $this->get_presentation( $post_id );
+		$title        = wpseo_replace_vars( $title_format, $post );
+		$description  = wpseo_replace_vars( $desc_format, $post );
 
 		$values = [
-			'title'              => $title,
+			'title'              => $this->filter_title( $title, $presentation ),
 			'description'        => $description,
 			'ogTitle'            => $title,
 			'ogDescription'      => $description,
@@ -169,7 +171,7 @@ class Yoast extends AbstractEngine {
 
 		return [
 			'values'        => array_map( [ $this, 'decode_entities' ], $values ),
-			'titleTemplate' => $this->build_title_template( $title_format, $post ),
+			'titleTemplate' => $this->build_title_template( $title_format, $post, $presentation ),
 		];
 	}
 
@@ -256,17 +258,26 @@ class Yoast extends AbstractEngine {
 	}
 
 	/**
-	 * Build the { prefix, suffix } that wraps the live post title by splitting
-	 * Yoast's title format on the `%%title%%` variable and resolving the
-	 * remaining variables in each half. Returns null when the format has no
-	 * `%%title%%`, so the caller falls back to the static title snapshot.
+	 * Build the { prefix, suffix } that wraps the live post title, so the title
+	 * tracks the post title as the user types.
 	 *
-	 * @param string   $title_format Yoast title template (e.g. "%%title%% %%sep%% %%sitename%%").
-	 * @param \WP_Post $post         Current post.
-	 * @return array{prefix:string,suffix:string}|null
+	 * The title is resolved with a placeholder for the post title and split on
+	 * it, so the affixes keep the spacing and separators Yoast renders and
+	 * anything `wpseo_title` adds. `untitled` is the title resolved for a post
+	 * with no title.
+	 *
+	 * Returns null when the resolved title has no post title in it, such as a
+	 * format without `%%title%%` or a filter that replaces the whole title, in
+	 * which case the editor shows the static snapshot.
+	 *
+	 * @param string                                                  $title_format Yoast title template (e.g. "%%title%% %%sep%% %%sitename%%").
+	 * @param \WP_Post                                                $post         Current post.
+	 * @param \Yoast\WP\SEO\Presentations\Indexable_Presentation|null $presentation Presentation passed to `wpseo_title`.
+	 * @return array{prefix:string,suffix:string,untitled:string}|null
 	 */
-	private function build_title_template( string $title_format, $post ): ?array {
-		$parts      = explode( '%%title%%', $title_format, 2 );
+	private function build_title_template( string $title_format, $post, $presentation ): ?array {
+		$title      = $this->resolve_title( $title_format, $post, self::TITLE_PLACEHOLDER, $presentation );
+		$parts      = explode( self::TITLE_PLACEHOLDER, $title, 2 );
 		$part_count = count( $parts );
 
 		if ( 2 !== $part_count ) {
@@ -274,8 +285,56 @@ class Yoast extends AbstractEngine {
 		}
 
 		return [
-			'prefix' => $this->decode_entities( wpseo_replace_vars( $parts[0], $post ) ),
-			'suffix' => $this->decode_entities( wpseo_replace_vars( $parts[1], $post ) ),
+			'prefix'   => $this->decode_entities( $parts[0] ),
+			'suffix'   => $this->decode_entities( $parts[1] ),
+			'untitled' => $this->decode_entities( $this->resolve_title( $title_format, $post, '', $presentation ) ),
 		];
+	}
+
+	/**
+	 * Resolve and filter the title format for the post with a different post
+	 * title.
+	 *
+	 * @param string                                                  $title_format Yoast title template.
+	 * @param \WP_Post                                                $post         Current post.
+	 * @param string                                                  $post_title   Post title to resolve `%%title%%` with.
+	 * @param \Yoast\WP\SEO\Presentations\Indexable_Presentation|null $presentation Presentation passed to `wpseo_title`.
+	 * @return string
+	 */
+	private function resolve_title( string $title_format, $post, string $post_title, $presentation ): string {
+		$post_copy             = clone $post;
+		$post_copy->post_title = $post_title;
+
+		return $this->filter_title( wpseo_replace_vars( $title_format, $post_copy ), $presentation );
+	}
+
+	/**
+	 * Run a resolved title through `wpseo_title`, then strip tags and trim it,
+	 * the way Yoast's title presenter does. The filter is skipped without a
+	 * presentation, since its callbacks expect one.
+	 *
+	 * @param string                                                  $title        Resolved title.
+	 * @param \Yoast\WP\SEO\Presentations\Indexable_Presentation|null $presentation Presentation passed to `wpseo_title`.
+	 * @return string
+	 */
+	private function filter_title( string $title, $presentation ): string {
+		if ( $presentation ) {
+			/** This filter is documented in wordpress-seo/src/presenters/title-presenter.php */
+			$title = (string) apply_filters( 'wpseo_title', $title, $presentation ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Yoast filter.
+		}
+
+		return trim( wp_strip_all_tags( $title ) );
+	}
+
+	/**
+	 * The post's Yoast presentation, or null when Yoast can't build one.
+	 *
+	 * @param int $post_id Current post ID.
+	 * @return \Yoast\WP\SEO\Presentations\Indexable_Presentation|null
+	 */
+	private function get_presentation( int $post_id ) {
+		$meta = YoastSEO()->meta->for_post( $post_id );
+
+		return $meta ? $meta->presentation : null;
 	}
 }

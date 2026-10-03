@@ -27,6 +27,15 @@ abstract class AbstractEngine implements EngineInterface {
 	protected const DEFAULT_FOCUS_KW_KEY = '_outstand_seo_focus_kw';
 
 	/**
+	 * Stand-in post title used to find where the post title sits in a generated
+	 * title. Letters only, so no engine variable syntax or text formatting
+	 * changes it.
+	 *
+	 * @var string
+	 */
+	protected const TITLE_PLACEHOLDER = 'OUTSTANDSEOPOSTTITLE';
+
+	/**
 	 * {@inheritDoc}
 	 *
 	 * @param int $post_id Post ID.

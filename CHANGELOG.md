@@ -5,6 +5,21 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- The default meta title in the SEO sidebar now matches the title the active
+  engine renders. Text that filters add around the post title
+  (`the_seo_framework_title_from_generation`, `wpseo_title`), The SEO
+  Framework's protection status, and the site name are kept while the title is
+  edited.
+- Yoast SEO: the live title keeps the space between the post title and the
+  rest of the title format, so it no longer renders as `Title- Site`.
+- Clearing the post title shows the title the engine renders for an untitled
+  post, in place of the title from when the editor loaded.
+- The SEO Framework: the static default title includes the site name.
+
 ## [1.3.0] - 2026-09-25
 
 ### Added

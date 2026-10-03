@@ -25,10 +25,21 @@ if ( file_exists( $plugin_dir . '/vendor/autoload.php' ) ) {
 // Load WordPress test suite functions.
 require_once $_tests_dir . '/includes/functions.php';
 
+// SEO engine plugin to load, so the engine-specific tests run: "tsf" or "yoast".
+$_engine_plugins = [
+	'tsf'   => 'autodescription/autodescription.php',
+	'yoast' => 'wordpress-seo/wp-seo.php',
+];
+$_engine_plugin  = $_engine_plugins[ (string) getenv( 'OUTSTAND_SEO_TEST_ENGINE' ) ] ?? '';
+
 // Load the plugin (defines constants and boots the singleton on plugins_loaded).
 tests_add_filter(
 	'muplugins_loaded',
-	function () use ( $plugin_dir ) {
+	function () use ( $plugin_dir, $_engine_plugin ) {
+		if ( '' !== $_engine_plugin ) {
+			require WP_PLUGIN_DIR . '/' . $_engine_plugin;
+		}
+
 		require $plugin_dir . '/plugin.php';
 	}
 );

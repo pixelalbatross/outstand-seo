@@ -5,8 +5,8 @@ import { getDefault, TITLE_TEMPLATE } from '../config';
 
 /**
  * The default meta title for the current post, reassembled live from the post
- * title as the user types (mirrors The SEO Framework). When the active engine
- * exposes no title template, falls back to the static server snapshot.
+ * title as the user types (mirrors The SEO Framework). Falls back to the static
+ * server snapshot when the active engine exposes no title template.
  *
  * @return {string} The default title.
  */
@@ -20,7 +20,9 @@ export function useTitleDefault() {
 		return getDefault( 'title' );
 	}
 
-	const base = postTitle || getDefault( 'title' );
+	if ( ! postTitle ) {
+		return TITLE_TEMPLATE.untitled;
+	}
 
-	return `${ TITLE_TEMPLATE.prefix }${ base }${ TITLE_TEMPLATE.suffix }`;
+	return `${ TITLE_TEMPLATE.prefix }${ postTitle }${ TITLE_TEMPLATE.suffix }`;
 }
