@@ -24,7 +24,7 @@ class RegisterNativeMetaTest extends \WP_UnitTestCase {
 	public function test_native_keys_registered_without_rest(): void {
 		( new TSF() )->register_native_meta( [ 'post' ] );
 
-		$registered = get_registered_meta_keys( 'post' );
+		$registered = get_registered_meta_keys( 'post', 'post' );
 
 		$this->assertArrayHasKey( '_genesis_title', $registered );
 		$this->assertFalse( $registered['_genesis_title']['show_in_rest'] );
@@ -42,7 +42,7 @@ class RegisterNativeMetaTest extends \WP_UnitTestCase {
 	public function test_primary_term_keys_registered(): void {
 		( new TSF() )->register_native_meta( [ 'post' ] );
 
-		$registered = get_registered_meta_keys( 'post' );
+		$registered = get_registered_meta_keys( 'post', 'post' );
 		$this->assertArrayHasKey( '_primary_term_category', $registered );
 	}
 }

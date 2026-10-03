@@ -42,12 +42,15 @@ class PrimaryTermsTest extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Primary term round-trips for a hierarchical taxonomy (category).
+	 * Primary term round-trips for a hierarchical taxonomy (category). The term
+	 * is assigned to the post, since TSF only reads back an assigned term.
 	 *
 	 * @return void
 	 */
 	public function test_primary_term_round_trip(): void {
 		$term_id = self::factory()->category->create();
+
+		wp_set_post_categories( $this->post_id, [ 1, $term_id ] );
 
 		$this->engine->denormalize( [ 'primaryTerms' => [ 'category' => $term_id ] ], $this->post_id );
 		$this->assertSame(

@@ -56,7 +56,7 @@ class YoastNormalizationTest extends \WP_UnitTestCase {
 
 		foreach ( $cases as $canonical => $native ) {
 			$this->engine->denormalize( [ 'noindex' => $canonical ], $this->post_id );
-			$this->assertSame( $native, get_post_meta( $this->post_id, '_yoast_wpseo_meta-robots-noindex', true ) );
+			$this->assertSame( $this->stored_value( $native, '0' ), get_post_meta( $this->post_id, '_yoast_wpseo_meta-robots-noindex', true ) );
 			$this->assertSame( $canonical, $this->engine->normalize( $this->post_id )['noindex'] );
 		}
 	}
@@ -86,7 +86,8 @@ class YoastNormalizationTest extends \WP_UnitTestCase {
 		$this->assertTrue( $this->engine->normalize( $this->post_id )['cornerstone'] );
 
 		$this->engine->denormalize( [ 'cornerstone' => false ], $this->post_id );
-		$this->assertSame( 'false', get_post_meta( $this->post_id, '_yoast_wpseo_is_cornerstone', true ) );
+		$this->assertSame( $this->stored_value( 'false', 'false' ), get_post_meta( $this->post_id, '_yoast_wpseo_is_cornerstone', true ) );
+		$this->assertFalse( $this->engine->normalize( $this->post_id )['cornerstone'] );
 	}
 
 	/**
@@ -131,5 +132,21 @@ class YoastNormalizationTest extends \WP_UnitTestCase {
 		$this->assertContains( 'noimageindex', $tokens );
 		$this->assertContains( 'nosnippet', $tokens );
 		$this->assertNotContains( 'noarchive', $tokens );
+	}
+
+	/**
+	 * The meta value stored for a written value. When Yoast SEO is loaded, it
+	 * deletes meta that equals the field's default, so the stored value is empty.
+	 *
+	 * @param string $value         Written value.
+	 * @param string $default_value The field's default in Yoast SEO.
+	 * @return string
+	 */
+	private function stored_value( string $value, string $default_value ): string {
+		if ( defined( 'WPSEO_VERSION' ) && $value === $default_value ) {
+			return '';
+		}
+
+		return $value;
 	}
 }
