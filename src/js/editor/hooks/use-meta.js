@@ -2,7 +2,8 @@ import { useEntityProp } from '@wordpress/core-data';
 import { useSelect } from '@wordpress/data';
 import { store as editorStore } from '@wordpress/editor';
 
-import { getField, getDefault } from '../config';
+import { getField } from '../config';
+import { store as defaultsStore } from '../store';
 
 /**
  * Read/write the current post's canonical SEO data. The active engine
@@ -42,13 +43,18 @@ export function useSeoData() {
 
 /**
  * Read/write a single canonical SEO field. Unsupported fields report
- * `supported: false` so the panel can omit the control.
+ * `supported: false` so the panel can omit the control. `default` is the value
+ * the active engine renders for the field from the current editor state.
  *
  * @param {string} name Canonical field name.
  * @return {{supported: boolean, value: *, default: string, setValue: Function}} Field handle.
  */
 export function useField( name ) {
 	const [ data, setValue ] = useSeoData();
+	const fieldDefault = useSelect(
+		( select ) => select( defaultsStore ).getDefault( name ),
+		[ name ]
+	);
 
 	if ( ! getField( name ) ) {
 		return {
@@ -62,7 +68,7 @@ export function useField( name ) {
 	return {
 		supported: true,
 		value: data[ name ],
-		default: getDefault( name ),
+		default: fieldDefault,
 		setValue: ( next ) => setValue( name, next ),
 	};
 }

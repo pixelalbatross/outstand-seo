@@ -7,7 +7,6 @@ import {
 import { __ } from '@wordpress/i18n';
 
 import { useField } from '../hooks/use-meta';
-import { useTitleDefault } from '../hooks/use-live-title';
 import CharCount from '../components/CharCount';
 import { TITLE_RANGE, DESC_RANGE } from '../components/char-status';
 
@@ -20,7 +19,6 @@ export default function GeneralPanel() {
 	const title = useField( 'title' );
 	const titleNoBlogname = useField( 'titleNoBlogname' );
 	const description = useField( 'description' );
-	const titleDefault = useTitleDefault();
 
 	return (
 		<VStack spacing={ 4 }>
@@ -30,7 +28,7 @@ export default function GeneralPanel() {
 						label={ __( 'Meta Title', 'outstand-seo' ) }
 						value={ title.value || '' }
 						onChange={ title.setValue }
-						placeholder={ titleDefault }
+						placeholder={ title.default }
 						help={ __(
 							'Overrides the title shown for this page in search results.',
 							'outstand-seo'
@@ -40,7 +38,7 @@ export default function GeneralPanel() {
 					/>
 					<CharCount
 						value={ title.value }
-						default={ titleDefault }
+						default={ title.default }
 						{ ...TITLE_RANGE }
 					/>
 				</VStack>

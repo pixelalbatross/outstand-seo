@@ -12,6 +12,7 @@ import GeneralPanel from './panels/GeneralPanel';
 import VisibilityPanel from './panels/VisibilityPanel';
 import SocialPanel from './panels/SocialPanel';
 import AnalysisPanel from './analysis/AnalysisPanel';
+import DefaultsSync from './components/DefaultsSync';
 
 // Registers the `editor.PostTaxonomyType` filter that injects the
 // primary-term control into the core taxonomy panel (Categories, etc.).
@@ -29,13 +30,15 @@ const ANALYSIS_PANEL = 'outstand-seo-analysis';
  *    focus keyphrase and on-page checks.
  *
  * Both read the active engine's field map (window.outstandSeo) and write that
- * engine's native post meta.
+ * engine's native post meta. DefaultsSync keeps the engine-rendered defaults in
+ * step with the unsaved editor state.
  */
 function OutstandSeoEditor() {
 	const seoTitle = __( 'SEO', 'outstand-seo' );
 
 	return (
 		<>
+			<DefaultsSync />
 			<PluginSidebarMoreMenuItem target={ SEO_SIDEBAR } icon={ seoIcon }>
 				{ seoTitle }
 			</PluginSidebarMoreMenuItem>
