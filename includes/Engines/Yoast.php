@@ -132,48 +132,19 @@ class Yoast extends AbstractEngine {
 	/**
 	 * {@inheritDoc}
 	 *
-	 * Resolves Yoast's per-post-type title/description templates through
-	 * `wpseo_replace_vars`, and runs the SEO title through `wpseo_title` the way
-	 * Yoast's title presenter does. Social defaults fall back to the unfiltered
-	 * SEO title and the description, mirroring Yoast's own frontend fallback
-	 * chain.
+	 * Rebuilds the post's indexable in memory from the edited meta with Yoast's
+	 * post builder and renders each value through Yoast's own presenter, so
+	 * custom fields, templates, fallbacks and filters apply as they do on the
+	 * page.
 	 *
-	 * @param int $post_id Current post ID.
+	 * @param int                 $post_id Current post ID.
+	 * @param array<string,mixed> $edits   Unsaved editor state.
 	 * @return array<string,mixed>
 	 */
-	public function get_editor_defaults( int $post_id ): array {
-
-		if ( ! function_exists( 'wpseo_replace_vars' ) || ! class_exists( '\WPSEO_Options' ) ) {
-			return [
-				'values'        => [],
-				'titleTemplate' => null,
-			];
-		}
-
-		$post      = get_post( $post_id );
-		$post_type = get_post_type( $post_id );
-
-		$title_format = (string) \WPSEO_Options::get( "title-{$post_type}", '' );
-		$desc_format  = (string) \WPSEO_Options::get( "metadesc-{$post_type}", '' );
-
-		$presentation = $this->get_presentation( $post_id );
-		$title        = wpseo_replace_vars( $title_format, $post );
-		$description  = wpseo_replace_vars( $desc_format, $post );
-
-		$values = [
-			'title'              => $this->filter_title( $title, $presentation ),
-			'description'        => $description,
-			'ogTitle'            => $title,
-			'ogDescription'      => $description,
-			'twitterTitle'       => $title,
-			'twitterDescription' => $description,
-		];
-
-		return [
-			'values'        => array_map( [ $this, 'decode_entities' ], $values ),
-			'titleTemplate' => $this->build_title_template( $title_format, $post, $presentation ),
-		];
+	public function get_editor_defaults( int $post_id, array $edits = [] ): array {
+		return $this->render_defaults( fn() => $this->render_values( $post_id, $edits ) );
 	}
+
 
 	/**
 	 * {@inheritDoc}
@@ -258,83 +229,144 @@ class Yoast extends AbstractEngine {
 	}
 
 	/**
-	 * Build the { prefix, suffix } that wraps the live post title, so the title
-	 * tracks the post title as the user types.
+	 * The titles and descriptions Yoast renders for the post from the edited
+	 * state, each through its own presenter. Empty when Yoast can't build the
+	 * post's presentation.
 	 *
-	 * The title is resolved with a placeholder for the post title and split on
-	 * it, so the affixes keep the spacing and separators Yoast renders and
-	 * anything `wpseo_title` adds. `untitled` is the title resolved for a post
-	 * with no title.
+	 * The saved indexable is looked up before the edited meta applies, so the
+	 * lookup only ever stores what Yoast would store for the saved post.
 	 *
-	 * Returns null when the resolved title has no post title in it, such as a
-	 * format without `%%title%%` or a filter that replaces the whole title, in
-	 * which case the editor shows the static snapshot.
-	 *
-	 * @param string                                                  $title_format Yoast title template (e.g. "%%title%% %%sep%% %%sitename%%").
-	 * @param \WP_Post                                                $post         Current post.
-	 * @param \Yoast\WP\SEO\Presentations\Indexable_Presentation|null $presentation Presentation passed to `wpseo_title`.
-	 * @return array{prefix:string,suffix:string,untitled:string}|null
+	 * @param int                 $post_id Post ID.
+	 * @param array<string,mixed> $edits   Unsaved editor state.
+	 * @return array<string,string>
 	 */
-	private function build_title_template( string $title_format, $post, $presentation ): ?array {
-		$title      = $this->resolve_title( $title_format, $post, self::TITLE_PLACEHOLDER, $presentation );
-		$parts      = explode( self::TITLE_PLACEHOLDER, $title, 2 );
-		$part_count = count( $parts );
-
-		if ( 2 !== $part_count ) {
-			return null;
+	private function render_values( int $post_id, array $edits ): array {
+		if ( ! function_exists( 'YoastSEO' ) ) {
+			return [];
 		}
 
+		$indexable = $this->copy_indexable( $post_id );
+
+		return $this->with_edited_meta(
+			$post_id,
+			$edits['values'] ?? [],
+			fn() => $this->render_presentation( $post_id, $indexable, $edits['postTitle'] ?? null )
+		);
+	}
+
+	/**
+	 * An unsaved copy of the post's indexable, or an empty one when Yoast has
+	 * none yet (e.g. an auto-draft).
+	 *
+	 * @param int $post_id Post ID.
+	 * @return \Yoast\WP\SEO\Models\Indexable
+	 */
+	private function copy_indexable( int $post_id ) {
+		$repository = YoastSEO()->classes->get( \Yoast\WP\SEO\Repositories\Indexable_Repository::class );
+		$indexable  = $repository->find_by_id_and_type( $post_id, 'post', false );
+		$data       = $indexable ? $indexable->as_array() : [
+			'object_id'   => $post_id,
+			'object_type' => 'post',
+		];
+
+		return $repository->query()->create( $data );
+	}
+
+	/**
+	 * Render the post's values from an indexable copy that Yoast's post builder
+	 * refreshes from the current meta.
+	 *
+	 * @param int                            $post_id    Post ID.
+	 * @param \Yoast\WP\SEO\Models\Indexable $indexable  Unsaved indexable copy.
+	 * @param string|null                    $post_title Edited post title, or null for the saved one.
+	 * @return array<string,string>
+	 */
+	private function render_presentation( int $post_id, $indexable, ?string $post_title ): array {
+		$presentation = $this->build_presentation( $post_id, $indexable );
+
+		if ( null === $presentation ) {
+			return [];
+		}
+
+		if ( null !== $post_title ) {
+			$source               = clone $presentation->source;
+			$source->post_title   = $post_title;
+			$presentation->source = $source;
+		}
+
+		$og_title       = $this->present( \Yoast\WP\SEO\Presenters\Open_Graph\Title_Presenter::class, $presentation );
+		$og_description = $this->present( \Yoast\WP\SEO\Presenters\Open_Graph\Description_Presenter::class, $presentation );
+
+		// Yoast leaves out the Twitter tags that would repeat Open Graph, and X
+		// then shows og:title and og:description.
+		$twitter_title       = $this->present( \Yoast\WP\SEO\Presenters\Twitter\Title_Presenter::class, $presentation );
+		$twitter_description = $this->present( \Yoast\WP\SEO\Presenters\Twitter\Description_Presenter::class, $presentation );
+
 		return [
-			'prefix'   => $this->decode_entities( $parts[0] ),
-			'suffix'   => $this->decode_entities( $parts[1] ),
-			'untitled' => $this->decode_entities( $this->resolve_title( $title_format, $post, '', $presentation ) ),
+			'title'              => $this->present( \Yoast\WP\SEO\Presenters\Title_Presenter::class, $presentation ),
+			'description'        => $this->present( \Yoast\WP\SEO\Presenters\Meta_Description_Presenter::class, $presentation ),
+			'ogTitle'            => $og_title,
+			'ogDescription'      => $og_description,
+			'twitterTitle'       => '' !== $twitter_title ? $twitter_title : $og_title,
+			'twitterDescription' => '' !== $twitter_description ? $twitter_description : $og_description,
 		];
 	}
 
 	/**
-	 * Resolve and filter the title format for the post with a different post
-	 * title.
+	 * The presentation Yoast's frontend renders for the post, built from the
+	 * indexable copy. An auto-draft reads as a draft while the copy builds,
+	 * since Yoast's builder skips auto-drafts. Null when Yoast doesn't index the
+	 * post.
 	 *
-	 * @param string                                                  $title_format Yoast title template.
-	 * @param \WP_Post                                                $post         Current post.
-	 * @param string                                                  $post_title   Post title to resolve `%%title%%` with.
-	 * @param \Yoast\WP\SEO\Presentations\Indexable_Presentation|null $presentation Presentation passed to `wpseo_title`.
-	 * @return string
-	 */
-	private function resolve_title( string $title_format, $post, string $post_title, $presentation ): string {
-		$post_copy             = clone $post;
-		$post_copy->post_title = $post_title;
-
-		return $this->filter_title( wpseo_replace_vars( $title_format, $post_copy ), $presentation );
-	}
-
-	/**
-	 * Run a resolved title through `wpseo_title`, then strip tags and trim it,
-	 * the way Yoast's title presenter does. The filter is skipped without a
-	 * presentation, since its callbacks expect one.
-	 *
-	 * @param string                                                  $title        Resolved title.
-	 * @param \Yoast\WP\SEO\Presentations\Indexable_Presentation|null $presentation Presentation passed to `wpseo_title`.
-	 * @return string
-	 */
-	private function filter_title( string $title, $presentation ): string {
-		if ( $presentation ) {
-			/** This filter is documented in wordpress-seo/src/presenters/title-presenter.php */
-			$title = (string) apply_filters( 'wpseo_title', $title, $presentation ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Yoast filter.
-		}
-
-		return trim( wp_strip_all_tags( $title ) );
-	}
-
-	/**
-	 * The post's Yoast presentation, or null when Yoast can't build one.
-	 *
-	 * @param int $post_id Current post ID.
+	 * @param int                            $post_id   Post ID.
+	 * @param \Yoast\WP\SEO\Models\Indexable $indexable Unsaved indexable copy.
 	 * @return \Yoast\WP\SEO\Presentations\Indexable_Presentation|null
 	 */
-	private function get_presentation( int $post_id ) {
-		$meta = YoastSEO()->meta->for_post( $post_id );
+	private function build_presentation( int $post_id, $indexable ) {
+		$read_as_draft = static function ( $status, $post ) use ( $post_id ) {
+			$status_post_id = (int) ( $post->ID ?? 0 );
 
-		return $meta ? $meta->presentation : null;
+			return 'auto-draft' === $status && $post_id === $status_post_id ? 'draft' : $status;
+		};
+
+		add_filter( 'get_post_status', $read_as_draft, 10, 2 );
+
+		try {
+			YoastSEO()->classes->get( \Yoast\WP\SEO\Builders\Indexable_Post_Builder::class )->build( $post_id, $indexable );
+		} catch ( \Yoast\WP\SEO\Exceptions\Indexable\Indexable_Exception $exception ) {
+			return null;
+		} finally {
+			remove_filter( 'get_post_status', $read_as_draft, 10 );
+		}
+
+		// The memoizer caches by indexable ID; clearing around the build keeps
+		// the edited copy out of Yoast's output for the saved post.
+		$memoizer = YoastSEO()->classes->get( \Yoast\WP\SEO\Memoizers\Meta_Tags_Context_Memoizer::class );
+		$memoizer->clear( $indexable );
+
+		try {
+			$context = $memoizer->get( $indexable, 'Post_Type' );
+
+			/** This filter is documented in wordpress-seo/src/integrations/front-end-integration.php */
+			return apply_filters( 'wpseo_frontend_presentation', $context->presentation, $context ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Yoast filter.
+		} finally {
+			$memoizer->clear( $indexable );
+		}
+	}
+
+	/**
+	 * Render a presentation value through a Yoast presenter.
+	 *
+	 * @param string                                             $presenter_class Presenter class name.
+	 * @param \Yoast\WP\SEO\Presentations\Indexable_Presentation $presentation    Presentation to render.
+	 * @return string
+	 */
+	private function present( string $presenter_class, $presentation ): string {
+		$presenter               = new $presenter_class();
+		$presenter->presentation = $presentation;
+		$presenter->helpers      = YoastSEO()->helpers;
+		$presenter->replace_vars = YoastSEO()->classes->get( \WPSEO_Replace_Vars::class );
+
+		return (string) $presenter->get();
 	}
 }

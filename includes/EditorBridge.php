@@ -19,6 +19,20 @@ use Outstand\WP\SEO\Engines\EngineManager;
 class EditorBridge extends BaseModule {
 
 	/**
+	 * REST namespace for the editor's routes.
+	 *
+	 * @var string
+	 */
+	public const REST_NAMESPACE = 'outstand-seo/v1';
+
+	/**
+	 * Longest string the defaults route accepts for a post title or SEO value.
+	 *
+	 * @var int
+	 */
+	public const REST_MAX_LENGTH = 5000;
+
+	/**
 	 * Register hooks. Engine resolution is deferred to `init` so engines that
 	 * load after this plugin (e.g. Yoast, loaded alphabetically later) are
 	 * detected.
@@ -27,6 +41,7 @@ class EditorBridge extends BaseModule {
 		add_action( 'init', [ $this, 'detect_and_disable' ], 5 );
 		add_action( 'init', [ $this, 'register_native_meta' ], 20 );
 		add_action( 'init', [ $this, 'register_rest_field' ], 20 );
+		add_action( 'rest_api_init', [ $this, 'register_rest_routes' ] );
 	}
 
 	/**
@@ -116,6 +131,73 @@ class EditorBridge extends BaseModule {
 				]
 			);
 		}
+	}
+
+	/**
+	 * Register the route that returns the active engine's rendered titles and
+	 * descriptions for a post's unsaved editor state.
+	 */
+	public function register_rest_routes(): void {
+		$engine = EngineManager::get_active();
+
+		if ( null === $engine ) {
+			return;
+		}
+
+		$post_types    = $this->get_post_types();
+		$values_schema = $engine->get_rest_schema();
+		unset( $values_schema['context'] );
+
+		// Caps the text each request makes the engine process.
+		foreach ( $values_schema['properties'] as $name => $property ) {
+			if ( 'string' === $property['type'] ) {
+				$values_schema['properties'][ $name ]['maxLength'] = self::REST_MAX_LENGTH;
+			}
+		}
+
+		$permission_callback = static function ( \WP_REST_Request $request ) use ( $post_types ) {
+			$post_id   = (int) $request['id'];
+			$post_type = get_post_type( $post_id );
+
+			if ( ! $post_type || ! in_array( $post_type, $post_types, true ) ) {
+				return false;
+			}
+
+			return current_user_can( 'edit_post', $post_id );
+		};
+
+		$callback = static function ( \WP_REST_Request $request ) use ( $engine ) {
+			$edits = [
+				'values' => (array) $request['values'],
+			];
+
+			if ( null !== $request['postTitle'] ) {
+				$edits['postTitle'] = $request['postTitle'];
+			}
+
+			return rest_ensure_response( $engine->get_editor_defaults( (int) $request['id'], $edits ) );
+		};
+
+		register_rest_route(
+			self::REST_NAMESPACE,
+			'/defaults/(?P<id>\\d+)',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => $callback,
+				'permission_callback' => $permission_callback,
+				'args'                => [
+					'id'        => [
+						'type'     => 'integer',
+						'required' => true,
+					],
+					'postTitle' => [
+						'type'      => 'string',
+						'maxLength' => self::REST_MAX_LENGTH,
+					],
+					'values'    => $values_schema + [ 'default' => [] ],
+				],
+			]
+		);
 	}
 
 	/**

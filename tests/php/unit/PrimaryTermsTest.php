@@ -63,6 +63,26 @@ class PrimaryTermsTest extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Primary terms for non-hierarchical or unattached taxonomies are not saved.
+	 *
+	 * @return void
+	 */
+	public function test_primary_term_ignores_disallowed_taxonomies(): void {
+		$this->engine->denormalize(
+			[
+				'primaryTerms' => [
+					'post_tag'        => 5,
+					'example_missing' => 6,
+				],
+			],
+			$this->post_id
+		);
+
+		$this->assertSame( '', get_post_meta( $this->post_id, '_primary_term_post_tag', true ) );
+		$this->assertSame( '', get_post_meta( $this->post_id, '_primary_term_example_missing', true ) );
+	}
+
+	/**
 	 * Only hierarchical taxonomies appear in the primaryTerms map.
 	 *
 	 * @return void

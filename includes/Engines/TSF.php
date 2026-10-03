@@ -99,37 +99,23 @@ class TSF extends AbstractEngine {
 	/**
 	 * {@inheritDoc}
 	 *
-	 * @param int $post_id Current post ID.
+	 * Each value comes from the TSF generator its frontend output uses, so custom
+	 * fields, fallbacks, branding and filters apply as they do on the page.
+	 *
+	 * @param int                 $post_id Current post ID.
+	 * @param array<string,mixed> $edits   Unsaved editor state.
 	 * @return array<string,mixed>
 	 */
-	public function get_editor_defaults( int $post_id ): array {
+	public function get_editor_defaults( int $post_id, array $edits = [] ): array {
 		// The generators below are TSF 5.0+ namespaced APIs; is_active() only
 		// checks for tsf(), so guard against older cores lacking them.
 		if ( ! class_exists( '\The_SEO_Framework\Meta\Title' ) ) {
 			return [
-				'values'        => [],
-				'titleTemplate' => null,
+				'values' => [],
 			];
 		}
 
-		$args = [ 'id' => $post_id ];
-
-		$title       = \The_SEO_Framework\Meta\Title::get_generated_title( $args );
-		$description = \The_SEO_Framework\Meta\Description::get_generated_description( $args );
-
-		$values = [
-			'title'              => $title,
-			'description'        => $description,
-			'ogTitle'            => \The_SEO_Framework\Meta\Open_Graph::get_generated_title( $args ),
-			'ogDescription'      => \The_SEO_Framework\Meta\Open_Graph::get_generated_description( $args ),
-			'twitterTitle'       => \The_SEO_Framework\Meta\Twitter::get_generated_title( $args ),
-			'twitterDescription' => \The_SEO_Framework\Meta\Twitter::get_generated_description( $args ),
-		];
-
-		return [
-			'values'        => array_map( [ $this, 'decode_entities' ], $values ),
-			'titleTemplate' => $this->build_title_template( $args ),
-		];
+		return $this->render_defaults( fn() => $this->render_values( $post_id, $edits ) );
 	}
 
 	/**
@@ -262,46 +248,96 @@ class TSF extends AbstractEngine {
 	}
 
 	/**
-	 * Build the { prefix, suffix } that wraps the live post title, so the title
-	 * tracks the post title as the user types.
+	 * The titles and descriptions TSF renders for the post from the edited
+	 * state, each from the generator its frontend output uses.
 	 *
-	 * The title is generated with a placeholder for the post title and split on
-	 * it, so the affixes keep anything a filter, the protection status or the
-	 * blogname addition puts around the post title. `untitled` wraps "Untitled",
-	 * which TSF uses when the post has no title.
-	 *
-	 * Returns null when the generated title has no post title in it, such as a
-	 * static front page or a filter that replaces the whole title, in which case
-	 * the editor shows the static snapshot.
-	 *
-	 * @param array<string,mixed> $args TSF generator args (e.g. [ 'id' => 123 ]).
-	 * @return array{prefix:string,suffix:string,untitled:string}|null
+	 * @param int                 $post_id Post ID.
+	 * @param array<string,mixed> $edits   Unsaved editor state.
+	 * @return array<string,string>
 	 */
-	private function build_title_template( array $args ): ?array {
-		$post_id         = (int) ( $args['id'] ?? 0 );
-		$use_placeholder = static fn( $title, $post ) => (int) ( $post->ID ?? 0 ) === $post_id ? self::TITLE_PLACEHOLDER : $title;
+	private function render_values( int $post_id, array $edits ): array {
+		$args       = [ 'id' => $post_id ];
+		$post_title = $edits['postTitle'] ?? null;
 
-		add_filter( 'single_post_title', $use_placeholder, PHP_INT_MAX, 2 );
+		// Swapped in first, so the title filters TSF's frontend runs (e.g.
+		// strip_tags) process the edited title too.
+		$use_post_title = static function ( $title, $post ) use ( $post_id, $post_title ) {
+			$title_post_id = (int) ( $post->ID ?? 0 );
 
-		// The extra arg keeps TSF's memoized title for these args apart from the real one.
-		$title = \The_SEO_Framework\Meta\Title::get_generated_title( $args + [ self::TITLE_PLACEHOLDER => true ] );
+			return $post_id === $title_post_id ? (string) $post_title : $title;
+		};
 
-		remove_filter( 'single_post_title', $use_placeholder, PHP_INT_MAX );
-
-		$parts      = explode( self::TITLE_PLACEHOLDER, $this->decode_entities( $title ), 2 );
-		$part_count = count( $parts );
-
-		if ( 2 !== $part_count ) {
-			return null;
+		if ( [] !== $edits ) {
+			// TSF memoizes its generators by args; the extra arg keeps output for
+			// these edits apart from the saved post's.
+			$args['outstand_seo_edits'] = md5( (string) wp_json_encode( $edits ) );
 		}
 
-		$untitled = $this->decode_entities( \The_SEO_Framework\Meta\Title::get_untitled_title() );
+		try {
+			if ( null !== $post_title ) {
+				add_filter( 'single_post_title', $use_post_title, PHP_INT_MIN, 2 );
+			}
 
-		return [
-			'prefix'   => $parts[0],
-			'suffix'   => $parts[1],
-			'untitled' => $parts[0] . $untitled . $parts[1],
-		];
+			// TSF memoizes post meta per post; refreshing around the computation
+			// makes it read the edited meta and keeps the edits out of later reads.
+			\The_SEO_Framework\Data\Plugin\Post::refresh_static_properties();
+
+			return $this->with_edited_meta(
+				$post_id,
+				$edits['values'] ?? [],
+				fn() => [
+					'title'              => \The_SEO_Framework\Meta\Title::get_title( $args ),
+					'description'        => \The_SEO_Framework\Meta\Description::get_description( $args ),
+					'ogTitle'            => \The_SEO_Framework\Meta\Open_Graph::get_title( $args ),
+					'ogDescription'      => \The_SEO_Framework\Meta\Open_Graph::get_description( $args ),
+					'twitterTitle'       => \The_SEO_Framework\Meta\Twitter::get_title( $args ),
+					'twitterDescription' => $this->get_twitter_description( $args ),
+				]
+			);
+		} finally {
+			remove_filter( 'single_post_title', $use_post_title, PHP_INT_MIN );
+			\The_SEO_Framework\Data\Plugin\Post::refresh_static_properties();
+		}
+	}
+
+	/**
+	 * The Twitter description TSF renders. With Open Graph output off, TSF 5.1's
+	 * generator for explicit args calls a missing `Title::get_custom_description()`
+	 * once the custom Twitter description is empty, so that case follows its
+	 * frontend chain: the custom Twitter description (the homepage setting first
+	 * on a static front page), then the custom meta description, then the
+	 * generated Twitter description.
+	 *
+	 * @param array<string,mixed> $args TSF generator args (e.g. [ 'id' => 123 ]).
+	 * @return string
+	 */
+	private function get_twitter_description( array $args ): string {
+		if ( \The_SEO_Framework\Meta\Twitter::fallback_to_open_graph() ) {
+			return \The_SEO_Framework\Meta\Twitter::get_description( $args );
+		}
+
+		$post_id             = (int) $args['id'];
+		$twitter_description = '';
+
+		if ( \The_SEO_Framework\Helper\Query::is_static_front_page( $post_id ) ) {
+			$twitter_description = (string) \The_SEO_Framework\Data\Plugin::get_option( 'homepage_twitter_description' );
+		}
+
+		if ( '' === $twitter_description ) {
+			$twitter_description = (string) \The_SEO_Framework\Data\Plugin\Post::get_meta_item( '_twitter_description', $post_id );
+		}
+
+		if ( '' !== $twitter_description ) {
+			return \The_SEO_Framework\Data\Filter\Sanitize::metadata_content( $twitter_description );
+		}
+
+		$description = \The_SEO_Framework\Meta\Description::get_custom_description( $args );
+
+		if ( '' !== $description ) {
+			return $description;
+		}
+
+		return \The_SEO_Framework\Meta\Twitter::get_generated_description( $args );
 	}
 
 	/**

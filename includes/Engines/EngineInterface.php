@@ -24,13 +24,13 @@ interface EngineInterface {
 	 *
 	 * @var string
 	 */
-	public const BREADCRUMB_SEPARATOR         = 'separator';
-	public const BREADCRUMB_SHOW_HOME         = 'show_home';
-	public const BREADCRUMB_SHOW_CURRENT      = 'show_current';
-	public const BREADCRUMB_PREFERS_TAXONOMY  = 'prefers_taxonomy';
-	public const BREADCRUMB_SHOW_ON_HOME      = 'show_on_home';
-	public const BREADCRUMB_HOME              = 'home';
-	public const BREADCRUMB_POST_ID           = 'post_id';
+	public const BREADCRUMB_SEPARATOR        = 'separator';
+	public const BREADCRUMB_SHOW_HOME        = 'show_home';
+	public const BREADCRUMB_SHOW_CURRENT     = 'show_current';
+	public const BREADCRUMB_PREFERS_TAXONOMY = 'prefers_taxonomy';
+	public const BREADCRUMB_SHOW_ON_HOME     = 'show_on_home';
+	public const BREADCRUMB_HOME             = 'home';
+	public const BREADCRUMB_POST_ID          = 'post_id';
 
 	/**
 	 * Stable engine slug (e.g. "tsf", "yoast").
@@ -119,22 +119,22 @@ interface EngineInterface {
 	public function get_rest_schema(): array;
 
 	/**
-	 * Per-post default title/description snapshots the engine would generate for
-	 * a post whose SEO fields are empty, handed to the editor JS so empty
-	 * controls can show the default as a placeholder and count it.
+	 * The titles and descriptions the engine renders for the post, computed by
+	 * the engine itself, so empty editor controls can show them as placeholders
+	 * and count them.
 	 *
-	 * Shape:
-	 *  - values        (array)      canonical field => generated default string.
-	 *  - titleTemplate (array|null) { prefix, suffix } wrapping the live post
-	 *                               title for real-time title reassembly, plus
-	 *                               `untitled`, the title of a post with no
-	 *                               title; or null to use the static
-	 *                               `values['title']`.
+	 * `$edits` holds the editor's unsaved state, applied in place of the saved
+	 * post for this computation only:
+	 *  - postTitle (string) the edited post title.
+	 *  - values    (array)  edited canonical SEO values.
 	 *
-	 * @param int $post_id Current post ID.
+	 * Shape: { values: canonical field => rendered string }.
+	 *
+	 * @param int                 $post_id Current post ID.
+	 * @param array<string,mixed> $edits   Unsaved editor state.
 	 * @return array<string,mixed>
 	 */
-	public function get_editor_defaults( int $post_id ): array;
+	public function get_editor_defaults( int $post_id, array $edits = [] ): array;
 
 	/**
 	 * Which normalized breadcrumb args this engine can actually honor.

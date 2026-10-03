@@ -27,15 +27,6 @@ abstract class AbstractEngine implements EngineInterface {
 	protected const DEFAULT_FOCUS_KW_KEY = '_outstand_seo_focus_kw';
 
 	/**
-	 * Stand-in post title used to find where the post title sits in a generated
-	 * title. Letters only, so no engine variable syntax or text formatting
-	 * changes it.
-	 *
-	 * @var string
-	 */
-	protected const TITLE_PLACEHOLDER = 'OUTSTANDSEOPOSTTITLE';
-
-	/**
 	 * {@inheritDoc}
 	 *
 	 * @param int $post_id Post ID.
@@ -64,21 +55,7 @@ abstract class AbstractEngine implements EngineInterface {
 	 * @param int                 $post_id   Post ID.
 	 */
 	public function denormalize( array $canonical, int $post_id ): void {
-		$writes = [];
-
-		foreach ( $this->get_field_map() as $name => $field ) {
-			if ( ! array_key_exists( $name, $canonical ) ) {
-				continue;
-			}
-
-			$key = $field['key'];
-
-			// Thread the accumulating native value so several canonical fields
-			// sharing one key (e.g. Yoast's CSV robots-adv) merge cleanly.
-			$current = $writes[ $key ] ?? get_post_meta( $post_id, $key, true );
-
-			$writes[ $key ] = $field['codec']->encode( $canonical[ $name ], $current );
-		}
+		$writes = $this->to_native( $canonical, $post_id );
 
 		foreach ( $writes as $key => $value ) {
 			update_post_meta( $post_id, $key, $value );
@@ -162,15 +139,15 @@ abstract class AbstractEngine implements EngineInterface {
 	 * {@inheritDoc}
 	 *
 	 * Base engines provide no defaults; concrete engines override to expose the
-	 * title/description they generate for the current post.
+	 * titles and descriptions they render for the current post.
 	 *
-	 * @param int $post_id Current post ID.
+	 * @param int                 $post_id Current post ID.
+	 * @param array<string,mixed> $edits   Unsaved editor state.
 	 * @return array<string,mixed>
 	 */
-	public function get_editor_defaults( int $post_id ): array {
+	public function get_editor_defaults( int $post_id, array $edits = [] ): array {
 		return [
-			'values'        => [],
-			'titleTemplate' => null,
+			'values' => [],
 		];
 	}
 
@@ -265,6 +242,103 @@ abstract class AbstractEngine implements EngineInterface {
 				);
 			}
 		}
+	}
+
+	/**
+	 * Native meta values for canonical values, encoded by each field's codec.
+	 * Fields sharing one key (e.g. Yoast's CSV robots-adv) merge into one value.
+	 *
+	 * @param array<string,mixed> $canonical Canonical values.
+	 * @param int                 $post_id   Post ID.
+	 * @return array<string,mixed>
+	 */
+	protected function to_native( array $canonical, int $post_id ): array {
+		$native = [];
+
+		foreach ( $this->get_field_map() as $name => $field ) {
+			if ( ! array_key_exists( $name, $canonical ) ) {
+				continue;
+			}
+
+			$key     = $field['key'];
+			$current = $native[ $key ] ?? get_post_meta( $post_id, $key, true );
+
+			$native[ $key ] = $field['codec']->encode( $canonical[ $name ], $current );
+		}
+
+		return $native;
+	}
+
+	/**
+	 * Run a callback while the post's meta reads return the edited canonical
+	 * values, so the engine computes its output from the unsaved editor state.
+	 * Each value is unslashed and sanitized the way saving it would store it.
+	 *
+	 * @param int                 $post_id  Post ID.
+	 * @param array<string,mixed> $values   Edited canonical values.
+	 * @param callable            $callback Computation to run.
+	 * @return mixed The callback's return value.
+	 */
+	protected function with_edited_meta( int $post_id, array $values, callable $callback ) {
+		$post_type = (string) get_post_type( $post_id );
+		$native    = [];
+		$reading   = false;
+
+		foreach ( $this->to_native( $values, $post_id ) as $key => $value ) {
+			$native[ $key ] = (string) sanitize_meta( $key, wp_unslash( $value ), 'post', $post_type );
+		}
+
+		$overlay = static function ( $value, $object_id, $meta_key ) use ( $post_id, $native, &$reading ) {
+			$meta_post_id = (int) $object_id;
+
+			if ( $reading || $post_id !== $meta_post_id ) {
+				return $value;
+			}
+
+			if ( '' !== $meta_key ) {
+				return array_key_exists( $meta_key, $native ) ? [ $native[ $meta_key ] ] : $value;
+			}
+
+			$reading = true;
+			$meta    = get_post_meta( $post_id );
+			$reading = false;
+
+			foreach ( $native as $key => $native_value ) {
+				$meta[ $key ] = [ $native_value ];
+			}
+
+			return $meta;
+		};
+
+		add_filter( 'get_post_metadata', $overlay, PHP_INT_MAX, 3 );
+
+		try {
+			return $callback();
+		} finally {
+			remove_filter( 'get_post_metadata', $overlay, PHP_INT_MAX );
+		}
+	}
+
+	/**
+	 * Wrap the engine's rendered values in the editor defaults shape. The values
+	 * come from the engine plugin's internals, so when an update to that plugin
+	 * breaks them, the editor gets empty defaults and a debug warning.
+	 *
+	 * @param callable $render Returns the rendered values, keyed by canonical field.
+	 * @return array{values:array<string,string>}
+	 */
+	protected function render_defaults( callable $render ): array {
+		try {
+			$values = $render();
+		} catch ( \Throwable $error ) {
+			wp_trigger_error( static::class . '::get_editor_defaults', $error->getMessage(), E_USER_WARNING );
+
+			$values = [];
+		}
+
+		return [
+			'values' => array_map( [ $this, 'decode_entities' ], $values ),
+		];
 	}
 
 	/**

@@ -1,7 +1,7 @@
 <?php
 /**
- * Engine-generated editor defaults (placeholders/counters). These call the live
- * TSF / Yoast generators, so each case is skipped unless its plugin is active.
+ * Engine-rendered editor defaults (placeholders/counters). These call the live
+ * TSF / Yoast pipelines, so each case is skipped unless its plugin is active.
  *
  * @package Outstand\WP\SEO\Tests\Unit
  */
@@ -14,191 +14,240 @@ use Outstand\WP\SEO\Engines\Yoast;
 /**
  * Test case.
  *
+ * @covers \Outstand\WP\SEO\Engines\AbstractEngine
  * @covers \Outstand\WP\SEO\Engines\TSF
  * @covers \Outstand\WP\SEO\Engines\Yoast
  */
 class EditorDefaultsTest extends \WP_UnitTestCase {
 
 	/**
-	 * TSF defaults expose title/description snapshots and a title template.
+	 * Canonical fields every engine renders a default for.
+	 *
+	 * @var string[]
+	 */
+	private const RENDERED_FIELDS = [
+		'title',
+		'description',
+		'ogTitle',
+		'ogDescription',
+		'twitterTitle',
+		'twitterDescription',
+	];
+
+	/**
+	 * TSF renders every title and description for the saved post.
 	 *
 	 * @return void
 	 */
-	public function test_tsf_defaults(): void {
-		$engine = new TSF();
-		if ( ! $engine->is_active() ) {
-			$this->markTestSkipped( 'The SEO Framework is not active.' );
-		}
+	public function test_tsf_defaults_render_saved_post(): void {
+		$engine = $this->tsf();
+		$values = $engine->get_editor_defaults( $this->create_post() )['values'];
 
-		$post_id  = self::factory()->post->create( [ 'post_title' => 'Hello World' ] );
-		$defaults = $engine->get_editor_defaults( $post_id );
-
-		$this->assertArrayHasKey( 'values', $defaults );
-		$this->assertArrayHasKey( 'title', $defaults['values'] );
-		$this->assertArrayHasKey( 'description', $defaults['values'] );
-		$this->assertIsString( $defaults['values']['title'] );
-
-		// titleTemplate is either { prefix, suffix, untitled } or null.
-		if ( null !== $defaults['titleTemplate'] ) {
-			$this->assertArrayHasKey( 'prefix', $defaults['titleTemplate'] );
-			$this->assertArrayHasKey( 'suffix', $defaults['titleTemplate'] );
-			$this->assertArrayHasKey( 'untitled', $defaults['titleTemplate'] );
-		}
+		$this->assertSame( self::RENDERED_FIELDS, array_keys( $values ) );
+		$this->assertStringStartsWith( 'Hello World', $values['title'] );
+		$this->assertStringContainsString( get_bloginfo( 'name' ), $values['title'] );
+		$this->assertSame( 'Hello World', $values['ogTitle'] );
 	}
 
 	/**
-	 * The TSF title template keeps what a filter adds around the post title, and
-	 * wrapping the post title in it gives the generated title.
+	 * TSF renders the edited post title, with what filters add around it.
 	 *
-	 * @dataProvider tsf_title_provider
-	 *
-	 * @param string $post_title     Post title.
-	 * @param string $rendered_title Post title as it appears in the generated title.
 	 * @return void
 	 */
-	public function test_tsf_title_template_keeps_filtered_affixes( string $post_title, string $rendered_title ): void {
-		$engine = new TSF();
-		if ( ! $engine->is_active() ) {
-			$this->markTestSkipped( 'The SEO Framework is not active.' );
-		}
-
+	public function test_tsf_defaults_use_edited_post_title(): void {
+		$engine       = $this->tsf();
 		$prefix_title = static fn( $title ) => "Example Client - {$title}";
 
 		add_filter( 'the_seo_framework_title_from_generation', $prefix_title );
 
-		$post_id  = self::factory()->post->create( [ 'post_title' => $post_title ] );
-		$defaults = $engine->get_editor_defaults( $post_id );
+		$values = $engine->get_editor_defaults( $this->create_post(), [ 'postTitle' => 'Edited Title' ] )['values'];
 
 		remove_filter( 'the_seo_framework_title_from_generation', $prefix_title );
 
-		$template = $defaults['titleTemplate'];
-
-		$this->assertNotNull( $template );
-		$this->assertStringEndsWith( 'Example Client - ', $template['prefix'] );
-		$this->assertSame(
-			$defaults['values']['title'],
-			$template['prefix'] . $rendered_title . $template['suffix']
-		);
-		$this->assertSame( $template['prefix'] . 'Untitled' . $template['suffix'], $template['untitled'] );
+		$this->assertStringStartsWith( 'Example Client - Edited Title', $values['title'] );
+		$this->assertSame( 'Example Client - Edited Title', $values['ogTitle'] );
 	}
 
 	/**
-	 * Post titles for the TSF title template test.
+	 * The edited title goes through the title filters TSF's frontend runs.
 	 *
-	 * @return array<string,array{string,string}>
+	 * @return void
 	 */
-	public function tsf_title_provider(): array {
+	public function test_tsf_defaults_filter_edited_post_title(): void {
+		$values = $this->tsf()->get_editor_defaults( $this->create_post(), [ 'postTitle' => 'Hello <b>World</b>' ] )['values'];
+
+		$this->assertSame( 'Hello World', $values['ogTitle'] );
+	}
+
+	/**
+	 * TSF renders "Untitled" for an emptied post title.
+	 *
+	 * @return void
+	 */
+	public function test_tsf_defaults_with_empty_post_title(): void {
+		$values = $this->tsf()->get_editor_defaults( $this->create_post(), [ 'postTitle' => '' ] )['values'];
+
+		$this->assertStringStartsWith( 'Untitled', $values['title'] );
+	}
+
+	/**
+	 * TSF social titles and descriptions fall back to the edited custom meta
+	 * title and description.
+	 *
+	 * @return void
+	 */
+	public function test_tsf_social_defaults_fall_back_to_edited_meta(): void {
+		$values = $this->tsf()->get_editor_defaults(
+			$this->create_post(),
+			[
+				'values' => [
+					'title'       => 'Custom Title',
+					'description' => 'Custom description',
+				],
+			]
+		)['values'];
+
+		$this->assertSame( 'Custom Title', $values['ogTitle'] );
+		$this->assertSame( 'Custom Title', $values['twitterTitle'] );
+		$this->assertSame( 'Custom description', $values['ogDescription'] );
+		$this->assertSame( 'Custom description', $values['twitterDescription'] );
+	}
+
+	/**
+	 * Edited values render as saving would store them: sanitized as text.
+	 *
+	 * @dataProvider engine_provider
+	 *
+	 * @param string $engine_class Engine class name.
+	 * @return void
+	 */
+	public function test_edited_values_render_sanitized( string $engine_class ): void {
+		$engine = 'tsf' === $engine_class ? $this->tsf() : $this->yoast();
+		$values = $engine->get_editor_defaults(
+			$this->create_post(),
+			[ 'values' => [ 'description' => '<b>Bold</b> description' ] ]
+		)['values'];
+
+		$this->assertSame( 'Bold description', $values['ogDescription'] );
+	}
+
+	/**
+	 * Engines for the engine-agnostic tests.
+	 *
+	 * @return array<string,array{string}>
+	 */
+	public function engine_provider(): array {
 		return [
-			'plain'      => [ 'Hello World', 'Hello World' ],
-			'apostrophe' => [ "Don't Panic", "Don\u{2019}t Panic" ],
-			'empty'      => [ '', 'Untitled' ],
+			'tsf'   => [ 'tsf' ],
+			'yoast' => [ 'yoast' ],
 		];
 	}
 
 	/**
-	 * Yoast defaults resolve templates via wpseo_replace_vars.
+	 * TSF Twitter values fall back to the edited Open Graph values first.
 	 *
 	 * @return void
 	 */
-	public function test_yoast_defaults(): void {
-		$engine = new Yoast();
-		if ( ! $engine->is_active() ) {
-			$this->markTestSkipped( 'Yoast SEO is not active.' );
-		}
+	public function test_tsf_twitter_defaults_fall_back_to_edited_open_graph(): void {
+		$values = $this->tsf()->get_editor_defaults(
+			$this->create_post(),
+			[
+				'values' => [
+					'description'   => 'Custom description',
+					'ogTitle'       => 'Custom social title',
+					'ogDescription' => 'Custom social description',
+				],
+			]
+		)['values'];
 
-		$post_id  = self::factory()->post->create( [ 'post_title' => 'Hello World' ] );
-		$defaults = $engine->get_editor_defaults( $post_id );
-
-		$this->assertArrayHasKey( 'values', $defaults );
-		$this->assertArrayHasKey( 'title', $defaults['values'] );
-		$this->assertIsString( $defaults['values']['title'] );
+		$this->assertSame( 'Custom social title', $values['twitterTitle'] );
+		$this->assertSame( 'Custom social description', $values['twitterDescription'] );
 	}
 
 	/**
-	 * The Yoast title template keeps the spacing around the post title and what
-	 * `wpseo_title` adds, and wrapping the post title in it gives the title.
+	 * TSF drops the site name when the edited state removes it.
 	 *
 	 * @return void
 	 */
-	public function test_yoast_title_template_keeps_filtered_affixes(): void {
-		$engine = new Yoast();
-		if ( ! $engine->is_active() ) {
-			$this->markTestSkipped( 'Yoast SEO is not active.' );
-		}
+	public function test_tsf_defaults_honor_edited_title_no_blogname(): void {
+		$values = $this->tsf()->get_editor_defaults(
+			$this->create_post(),
+			[ 'values' => [ 'titleNoBlogname' => true ] ]
+		)['values'];
 
-		$prefix_title = static fn( $title ) => "Example Client - {$title}";
-
-		add_filter( 'wpseo_title', $prefix_title );
-
-		$post_id  = self::factory()->post->create( [ 'post_title' => 'Hello World' ] );
-		$defaults = $engine->get_editor_defaults( $post_id );
-
-		remove_filter( 'wpseo_title', $prefix_title );
-
-		$template = $defaults['titleTemplate'];
-
-		$this->assertNotNull( $template );
-		$this->assertStringStartsWith( 'Example Client - ', $template['prefix'] );
-		$this->assertSame( $defaults['values']['title'], $template['prefix'] . 'Hello World' . $template['suffix'] );
-		$this->assertStringNotContainsString( 'Example Client', $defaults['values']['ogTitle'] );
-		$this->assertStringNotContainsString( 'OUTSTANDSEOPOSTTITLE', $template['untitled'] );
+		$this->assertSame( 'Hello World', $values['title'] );
 	}
 
 	/**
-	 * The TSF title template finds the post title when a filter adds the same
-	 * text in front of it.
+	 * Edits apply to the computation only: nothing is saved, and the saved post
+	 * renders as before afterwards.
 	 *
 	 * @return void
 	 */
-	public function test_tsf_title_template_with_post_title_repeated_in_prefix(): void {
-		$engine = new TSF();
-		if ( ! $engine->is_active() ) {
-			$this->markTestSkipped( 'The SEO Framework is not active.' );
-		}
+	public function test_tsf_edits_are_not_kept(): void {
+		$engine  = $this->tsf();
+		$post_id = $this->create_post();
 
-		$prefix_title = static fn( $title ) => "Hello World - {$title}";
+		$engine->get_editor_defaults(
+			$post_id,
+			[
+				'postTitle' => 'Edited Title',
+				'values'    => [ 'title' => 'Custom Title' ],
+			]
+		);
 
-		add_filter( 'the_seo_framework_title_from_generation', $prefix_title );
+		$values = $engine->get_editor_defaults( $post_id )['values'];
 
-		$post_id  = self::factory()->post->create( [ 'post_title' => 'Hello World' ] );
-		$defaults = $engine->get_editor_defaults( $post_id );
-
-		remove_filter( 'the_seo_framework_title_from_generation', $prefix_title );
-
-		$template = $defaults['titleTemplate'];
-
-		$this->assertNotNull( $template );
-		$this->assertStringEndsWith( 'Hello World - ', $template['prefix'] );
-		$this->assertStringStartsWith( 'Hello World - Untitled', $template['untitled'] );
-		$this->assertStringContainsString( 'Hello World - Hello World', $defaults['values']['title'] );
+		$this->assertSame( '', get_post_meta( $post_id, '_genesis_title', true ) );
+		$this->assertStringStartsWith( 'Hello World', $values['title'] );
+		$this->assertSame( 'Hello World', $values['ogTitle'] );
 	}
 
 	/**
-	 * The Yoast title template finds the post title when `wpseo_title` adds the
-	 * same text in front of it.
+	 * With Open Graph output off, the TSF Twitter description follows TSF's
+	 * frontend chain. Runs isolated so the Open Graph setting doesn't leak.
 	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
 	 * @return void
 	 */
-	public function test_yoast_title_template_with_post_title_repeated_in_prefix(): void {
-		$engine = new Yoast();
-		if ( ! $engine->is_active() ) {
-			$this->markTestSkipped( 'Yoast SEO is not active.' );
-		}
+	public function test_tsf_twitter_description_without_open_graph(): void {
+		$engine = $this->tsf();
 
-		$prefix_title = static fn( $title ) => "Hello World - {$title}";
+		// TSF memoizes the front page ID per request, so it is set up first.
+		$front_page_id = self::factory()->post->create( [ 'post_type' => 'page' ] );
+		update_option( 'show_on_front', 'page' );
+		update_option( 'page_on_front', $front_page_id );
 
-		add_filter( 'wpseo_title', $prefix_title );
+		$options                                 = (array) get_option( THE_SEO_FRAMEWORK_SITE_OPTIONS, [] );
+		$options['og_tags']                      = 0;
+		$options['homepage_twitter_description'] = 'Homepage Twitter description';
+		update_option( THE_SEO_FRAMEWORK_SITE_OPTIONS, $options );
+		\The_SEO_Framework\Data\Plugin::refresh_static_properties();
 
-		$post_id  = self::factory()->post->create( [ 'post_title' => 'Hello World' ] );
-		$defaults = $engine->get_editor_defaults( $post_id );
+		$custom = $engine->get_editor_defaults(
+			$this->create_post(),
+			[
+				'values' => [
+					'description'        => 'Custom description',
+					'twitterDescription' => 'Custom Twitter description',
+				],
+			]
+		)['values'];
 
-		remove_filter( 'wpseo_title', $prefix_title );
+		$meta = $engine->get_editor_defaults(
+			$this->create_post(),
+			[ 'values' => [ 'description' => 'Custom description' ] ]
+		)['values'];
 
-		$template = $defaults['titleTemplate'];
+		$generated = $engine->get_editor_defaults( $this->create_post( 'Example excerpt for the generated description.' ) )['values'];
 
-		$this->assertNotNull( $template );
-		$this->assertSame( 'Hello World - ', $template['prefix'] );
-		$this->assertStringStartsWith( 'Hello World - ', $template['untitled'] );
+		$front_page = $engine->get_editor_defaults( $front_page_id, [ 'values' => [ 'description' => 'Custom description' ] ] )['values'];
+
+		$this->assertSame( 'Custom Twitter description', $custom['twitterDescription'] );
+		$this->assertSame( 'Homepage Twitter description', $front_page['twitterDescription'] );
+		$this->assertSame( 'Custom description', $meta['twitterDescription'] );
+		$this->assertStringContainsString( 'Example excerpt', $generated['twitterDescription'] );
 	}
 
 	/**
@@ -211,96 +260,441 @@ class EditorDefaultsTest extends \WP_UnitTestCase {
 			$this->markTestSkipped( 'The SEO Framework is active.' );
 		}
 
-		$post_id  = self::factory()->post->create( [ 'post_title' => 'Hello World' ] );
-		$defaults = ( new TSF() )->get_editor_defaults( $post_id );
+		$defaults = ( new TSF() )->get_editor_defaults( $this->create_post() );
 
-		$this->assertSame( [], $defaults['values'] );
-		$this->assertNull( $defaults['titleTemplate'] );
+		$this->assertSame( [ 'values' => [] ], $defaults );
 	}
 
 	/**
-	 * The TSF title template is null when the generated title has no post title
-	 * in it.
+	 * Yoast renders every title and description for the saved post.
 	 *
 	 * @return void
 	 */
-	public function test_tsf_title_template_is_null_without_post_title(): void {
+	public function test_yoast_defaults_render_saved_post(): void {
+		$values = $this->yoast()->get_editor_defaults( $this->create_post() )['values'];
+
+		$this->assertSame( self::RENDERED_FIELDS, array_keys( $values ) );
+		$this->assertStringStartsWith( 'Hello World', $values['title'] );
+		$this->assertStringContainsString( get_bloginfo( 'name' ), $values['title'] );
+	}
+
+	/**
+	 * Yoast renders the edited post title, with what `wpseo_title` adds.
+	 *
+	 * @return void
+	 */
+	public function test_yoast_defaults_use_edited_post_title(): void {
+		$engine       = $this->yoast();
+		$prefix_title = static fn( $title ) => "Example Client - {$title}";
+
+		add_filter( 'wpseo_title', $prefix_title );
+
+		$values = $engine->get_editor_defaults( $this->create_post(), [ 'postTitle' => 'Edited Title' ] )['values'];
+
+		remove_filter( 'wpseo_title', $prefix_title );
+
+		$this->assertStringStartsWith( 'Example Client - Edited Title', $values['title'] );
+		$this->assertStringStartsWith( 'Edited Title', $values['ogTitle'] );
+	}
+
+	/**
+	 * Yoast social titles and descriptions fall back to the edited SEO title and
+	 * meta description, with their variables resolved.
+	 *
+	 * @return void
+	 */
+	public function test_yoast_social_defaults_fall_back_to_edited_meta(): void {
+		$values = $this->yoast()->get_editor_defaults(
+			$this->create_post(),
+			[
+				'postTitle' => 'Edited Title',
+				'values'    => [
+					'title'       => 'Custom %%title%%',
+					'description' => 'Custom description',
+				],
+			]
+		)['values'];
+
+		$this->assertSame( 'Custom Edited Title', $values['ogTitle'] );
+		$this->assertSame( 'Custom Edited Title', $values['twitterTitle'] );
+		$this->assertSame( 'Custom description', $values['ogDescription'] );
+		$this->assertSame( 'Custom description', $values['twitterDescription'] );
+	}
+
+	/**
+	 * Yoast leaves out Twitter tags that repeat Open Graph, so the Twitter
+	 * values are the edited Open Graph ones.
+	 *
+	 * @return void
+	 */
+	public function test_yoast_twitter_defaults_fall_back_to_edited_open_graph(): void {
+		$values = $this->yoast()->get_editor_defaults(
+			$this->create_post(),
+			[
+				'values' => [
+					'ogTitle'       => 'Custom social title',
+					'ogDescription' => 'Custom social description',
+				],
+			]
+		)['values'];
+
+		$this->assertSame( 'Custom social title', $values['twitterTitle'] );
+		$this->assertSame( 'Custom social description', $values['twitterDescription'] );
+	}
+
+	/**
+	 * Yoast social descriptions fall back to the excerpt without a description
+	 * template.
+	 *
+	 * @return void
+	 */
+	public function test_yoast_social_description_falls_back_to_excerpt(): void {
+		$engine      = $this->yoast();
+		$desc_format = \WPSEO_Options::get( 'metadesc-post' );
+
+		\WPSEO_Options::set( 'metadesc-post', '' );
+
+		$post_id = self::factory()->post->create(
+			[
+				'post_title'   => 'Hello World',
+				'post_excerpt' => 'Example excerpt',
+			]
+		);
+		$values  = $engine->get_editor_defaults( $post_id )['values'];
+
+		\WPSEO_Options::set( 'metadesc-post', $desc_format );
+
+		$this->assertSame( 'Example excerpt', $values['ogDescription'] );
+		$this->assertSame( 'Example excerpt', $values['twitterDescription'] );
+	}
+
+	/**
+	 * Edits never reach Yoast's stored indexable: a missing indexable stays
+	 * missing, and an outdated one is rebuilt from the saved post only.
+	 *
+	 * @return void
+	 */
+	public function test_yoast_edits_never_reach_stored_indexable(): void {
+		$engine     = $this->yoast();
+		$repository = YoastSEO()->classes->get( \Yoast\WP\SEO\Repositories\Indexable_Repository::class );
+		$edits      = [
+			'postTitle' => 'Edited Title',
+			'values'    => [
+				'title'   => 'Custom Title',
+				'noindex' => 'off',
+			],
+		];
+
+		$missing_id = $this->create_post();
+		$indexable  = $repository->find_by_id_and_type( $missing_id, 'post', false );
+
+		if ( $indexable ) {
+			$indexable->delete();
+		}
+
+		$engine->get_editor_defaults( $missing_id, $edits );
+
+		$outdated_id                 = $this->create_post();
+		$outdated                    = $repository->find_by_id_and_type( $outdated_id, 'post' );
+		$outdated->version           = 0;
+		$outdated->title             = null;
+		$outdated->is_robots_noindex = null;
+		$outdated->save();
+
+		$engine->get_editor_defaults( $outdated_id, $edits );
+
+		$stored = $repository->find_by_id_and_type( $outdated_id, 'post', false );
+
+		$this->assertFalse( $repository->find_by_id_and_type( $missing_id, 'post', false ) );
+		$this->assertNull( $stored->title );
+		$this->assertNotTrue( $stored->is_robots_noindex );
+		$this->assertSame( '', get_post_meta( $outdated_id, '_yoast_wpseo_title', true ) );
+	}
+
+	/**
+	 * Yoast renders an auto-draft as the draft it becomes, so a new post has
+	 * defaults before its first save.
+	 *
+	 * @return void
+	 */
+	public function test_yoast_defaults_for_auto_draft(): void {
+		$post_id = self::factory()->post->create(
+			[
+				'post_title'  => 'Auto Draft',
+				'post_status' => 'auto-draft',
+			]
+		);
+		$values  = $this->yoast()->get_editor_defaults( $post_id, [ 'postTitle' => 'Edited Title' ] )['values'];
+
+		$this->assertStringStartsWith( 'Edited Title', $values['title'] );
+		$this->assertSame( 'auto-draft', get_post_status( $post_id ) );
+	}
+
+	/**
+	 * Yoast renders the presentation its frontend filters.
+	 *
+	 * @return void
+	 */
+	public function test_yoast_defaults_apply_frontend_presentation_filter(): void {
+		$engine = $this->yoast();
+		$filter = static function ( $presentation ) {
+			$presentation->open_graph_title = 'Filtered social title';
+
+			return $presentation;
+		};
+
+		add_filter( 'wpseo_frontend_presentation', $filter );
+
+		$values = $engine->get_editor_defaults( $this->create_post() )['values'];
+
+		remove_filter( 'wpseo_frontend_presentation', $filter );
+
+		$this->assertSame( 'Filtered social title', $values['ogTitle'] );
+	}
+
+
+	/**
+	 * Yoast defaults are empty for a post Yoast doesn't index.
+	 *
+	 * @return void
+	 */
+	public function test_yoast_defaults_for_excluded_post_type(): void {
+		$engine  = $this->yoast();
+		$exclude = static fn( $post_types ) => array_merge( (array) $post_types, [ 'page' ] );
+
+		add_filter( 'wpseo_indexable_excluded_post_types', $exclude );
+
+		$post_id  = self::factory()->post->create( [ 'post_type' => 'page' ] );
+		$defaults = $engine->get_editor_defaults( $post_id );
+
+		remove_filter( 'wpseo_indexable_excluded_post_types', $exclude );
+
+		$this->assertSame( [ 'values' => [] ], $defaults );
+	}
+
+	/**
+	 * Yoast defaults are empty without Yoast.
+	 *
+	 * @return void
+	 */
+	public function test_yoast_defaults_without_yoast(): void {
+		if ( function_exists( 'YoastSEO' ) ) {
+			$this->markTestSkipped( 'Yoast SEO is active.' );
+		}
+
+		$defaults = ( new Yoast() )->get_editor_defaults( $this->create_post() );
+
+		$this->assertSame( [ 'values' => [] ], $defaults );
+	}
+
+	/**
+	 * Yoast defaults are empty once Yoast stops indexing a post it has an
+	 * indexable for.
+	 *
+	 * @return void
+	 */
+	public function test_yoast_defaults_when_post_is_no_longer_indexed(): void {
+		$engine  = $this->yoast();
+		$post_id = self::factory()->post->create( [ 'post_type' => 'page' ] );
+		$exclude = static fn( $post_types ) => array_merge( (array) $post_types, [ 'page' ] );
+
+		$engine->get_editor_defaults( $post_id );
+
+		add_filter( 'wpseo_indexable_excluded_post_types', $exclude );
+
+		$defaults = $engine->get_editor_defaults( $post_id );
+
+		remove_filter( 'wpseo_indexable_excluded_post_types', $exclude );
+
+		$this->assertSame( [ 'values' => [] ], $defaults );
+	}
+
+	/**
+	 * An engine that doesn't render titles and descriptions has no defaults.
+	 *
+	 * @return void
+	 */
+	public function test_base_engine_renders_no_defaults(): void {
+		$engine = new class() extends \Outstand\WP\SEO\Engines\AbstractEngine {
+
+			/**
+			 * {@inheritDoc}
+			 */
+			public function get_slug(): string {
+				return 'example';
+			}
+
+			/**
+			 * {@inheritDoc}
+			 */
+			public function is_active(): bool {
+				return true;
+			}
+
+			/**
+			 * {@inheritDoc}
+			 */
+			public function disable_native_editor_ui(): void {}
+
+			/**
+			 * {@inheritDoc}
+			 */
+			public function get_field_map(): array {
+				return [];
+			}
+
+			/**
+			 * {@inheritDoc}
+			 */
+			public function get_primary_term_key_pattern(): string {
+				return '';
+			}
+
+			/**
+			 * {@inheritDoc}
+			 *
+			 * @param array<string,mixed> $args Normalized breadcrumb args.
+			 */
+			public function get_breadcrumb_html( array $args ): string {
+				return '';
+			}
+
+			/**
+			 * {@inheritDoc}
+			 */
+			public function get_schema_graph_filter(): string {
+				return '';
+			}
+		};
+
+		$this->assertSame( [ 'values' => [] ], $engine->get_editor_defaults( $this->create_post() ) );
+	}
+
+	/**
+	 * When TSF's internals fail, the defaults are empty, a debug warning names
+	 * the engine, and no temporary filter is left behind.
+	 *
+	 * @return void
+	 */
+	public function test_tsf_defaults_fail_safe(): void {
+		$engine = $this->tsf();
+		$fail   = static function () {
+			throw new \RuntimeException( 'Example engine failure' );
+		};
+
+		add_filter( 'the_seo_framework_title_from_generation', $fail );
+
+		$result = $this->capture_warnings( fn() => $engine->get_editor_defaults( $this->create_post(), [ 'postTitle' => 'Edited Title' ] ) );
+
+		remove_filter( 'the_seo_framework_title_from_generation', $fail );
+
+		$this->assertSame( [ 'values' => [] ], $result['return'] );
+		$this->assertSame( [ TSF::class . '::get_editor_defaults: Example engine failure' ], $result['warnings'] );
+		$this->assertSame( [], $this->callbacks_at_max_priority( 'single_post_title' ) );
+		$this->assertSame( [], $this->callbacks_at_max_priority( 'get_post_metadata' ) );
+	}
+
+	/**
+	 * When Yoast's internals fail, the defaults are empty, a debug warning
+	 * names the engine, and no temporary filter is left behind.
+	 *
+	 * @return void
+	 */
+	public function test_yoast_defaults_fail_safe(): void {
+		$engine = $this->yoast();
+		$fail   = static function () {
+			throw new \RuntimeException( 'Example engine failure' );
+		};
+
+		add_filter( 'wpseo_title', $fail );
+
+		$result = $this->capture_warnings( fn() => $engine->get_editor_defaults( $this->create_post() ) );
+
+		remove_filter( 'wpseo_title', $fail );
+
+		$this->assertSame( [ 'values' => [] ], $result['return'] );
+		$this->assertSame( [ Yoast::class . '::get_editor_defaults: Example engine failure' ], $result['warnings'] );
+		$this->assertSame( [], $this->callbacks_at_max_priority( 'get_post_metadata' ) );
+	}
+
+	/**
+	 * The TSF engine, skipping the test when TSF is not active.
+	 *
+	 * @return TSF
+	 */
+	private function tsf(): TSF {
 		$engine = new TSF();
 		if ( ! $engine->is_active() ) {
 			$this->markTestSkipped( 'The SEO Framework is not active.' );
 		}
 
-		$replace_title = static fn() => 'Example Fixed Title';
-
-		add_filter( 'the_seo_framework_title_from_generation', $replace_title );
-
-		$post_id  = self::factory()->post->create( [ 'post_title' => 'Hello World' ] );
-		$defaults = $engine->get_editor_defaults( $post_id );
-
-		remove_filter( 'the_seo_framework_title_from_generation', $replace_title );
-
-		$this->assertNull( $defaults['titleTemplate'] );
-		$this->assertStringContainsString( 'Example Fixed Title', $defaults['values']['title'] );
+		return $engine;
 	}
 
 	/**
-	 * Yoast defaults are empty when Yoast's replacement API is unavailable.
+	 * The Yoast engine, skipping the test when Yoast is not active.
 	 *
-	 * @return void
+	 * @return Yoast
 	 */
-	public function test_yoast_defaults_without_replace_vars(): void {
-		if ( function_exists( 'wpseo_replace_vars' ) ) {
-			$this->markTestSkipped( 'Yoast SEO is active.' );
-		}
-
-		$post_id  = self::factory()->post->create( [ 'post_title' => 'Hello World' ] );
-		$defaults = ( new Yoast() )->get_editor_defaults( $post_id );
-
-		$this->assertSame( [], $defaults['values'] );
-		$this->assertNull( $defaults['titleTemplate'] );
-	}
-
-	/**
-	 * The Yoast title template is null when `wpseo_title` replaces the whole
-	 * title.
-	 *
-	 * @return void
-	 */
-	public function test_yoast_title_template_is_null_without_post_title(): void {
+	private function yoast(): Yoast {
 		$engine = new Yoast();
 		if ( ! $engine->is_active() ) {
 			$this->markTestSkipped( 'Yoast SEO is not active.' );
 		}
 
-		$replace_title = static fn() => 'Example Fixed Title';
-
-		add_filter( 'wpseo_title', $replace_title );
-
-		$post_id  = self::factory()->post->create( [ 'post_title' => 'Hello World' ] );
-		$defaults = $engine->get_editor_defaults( $post_id );
-
-		remove_filter( 'wpseo_title', $replace_title );
-
-		$this->assertNull( $defaults['titleTemplate'] );
-		$this->assertSame( 'Example Fixed Title', $defaults['values']['title'] );
+		return $engine;
 	}
 
 	/**
-	 * Without a presentation, the Yoast title skips `wpseo_title` and is still
-	 * stripped of tags and trimmed.
+	 * Run a callback while recording `wp_trigger_error()` warnings in place of
+	 * raising them.
 	 *
-	 * @return void
+	 * @param callable $callback Code under test.
+	 * @return array{return:mixed,warnings:string[]}
 	 */
-	public function test_yoast_filter_title_skips_filter_without_presentation(): void {
-		$prefix_title = static fn( $title ) => "Example Client - {$title}";
+	private function capture_warnings( callable $callback ): array {
+		$warnings = [];
+		$record   = static function ( $function_name, $message ) use ( &$warnings ) {
+			$warnings[] = "{$function_name}: {$message}";
+		};
 
-		add_filter( 'wpseo_title', $prefix_title );
+		add_action( 'wp_trigger_error_always_run', $record, 10, 2 );
+		add_filter( 'wp_trigger_error_trigger_error', '__return_false' );
 
-		$filter_title = new \ReflectionMethod( Yoast::class, 'filter_title' );
-		$title        = $filter_title->invoke( new Yoast(), ' <b>Hello World</b> ', null );
+		$return = $callback();
 
-		remove_filter( 'wpseo_title', $prefix_title );
+		remove_action( 'wp_trigger_error_always_run', $record );
+		remove_filter( 'wp_trigger_error_trigger_error', '__return_false' );
 
-		$this->assertSame( 'Hello World', $title );
+		return [
+			'return'   => $return,
+			'warnings' => $warnings,
+		];
+	}
+
+	/**
+	 * Callbacks on a hook at `PHP_INT_MAX`, the priority the engines' temporary
+	 * filters use.
+	 *
+	 * @param string $hook Hook name.
+	 * @return array<string,mixed>
+	 */
+	private function callbacks_at_max_priority( string $hook ): array {
+		return $GLOBALS['wp_filter'][ $hook ]->callbacks[ PHP_INT_MAX ] ?? [];
+	}
+
+	/**
+	 * A published post titled "Hello World".
+	 *
+	 * @param string $excerpt Post excerpt.
+	 * @return int
+	 */
+	private function create_post( string $excerpt = 'Example excerpt' ): int {
+		return self::factory()->post->create(
+			[
+				'post_title'   => 'Hello World',
+				'post_excerpt' => $excerpt,
+			]
+		);
 	}
 }
