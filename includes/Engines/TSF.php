@@ -39,10 +39,29 @@ class TSF extends AbstractEngine {
 	}
 
 	/**
-	 * Remove TSF's classic SEO metabox; the frontend engine is untouched.
+	 * Remove TSF's classic SEO metabox and the post editor scripts that drive it; the frontend
+	 * engine is untouched.
 	 */
 	public function disable_native_editor_ui(): void {
 		add_filter( 'the_seo_framework_seobox_output', '__return_false' );
+		add_filter( 'the_seo_framework_register_scripts', [ $this, 'skip_post_editor_scripts' ] );
+	}
+
+	/**
+	 * Stops TSF loading its scripts on post edit screens. They drive the removed metabox and throw
+	 * when its fields are missing; other admin screens keep them.
+	 *
+	 * @param  bool $register Whether TSF registers its admin scripts.
+	 * @return bool
+	 */
+	public function skip_post_editor_scripts( $register ) {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( $screen instanceof \WP_Screen && 'post' === $screen->base ) {
+			return false;
+		}
+
+		return $register;
 	}
 
 	/**
