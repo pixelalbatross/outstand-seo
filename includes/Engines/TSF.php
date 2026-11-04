@@ -25,6 +25,13 @@ class TSF extends AbstractEngine {
 	private const FOCUS_EXT_META_KEY = '_tsfem-extension-post-meta';
 
 	/**
+	 * TSF's classic primary term selector (`tsf-pt`) and the scripts it depends on.
+	 *
+	 * @var string[]
+	 */
+	private const PRIMARY_TERM_SCRIPTS = [ 'tsf-utils', 'tsf', 'tsf-tt', 'tsf-ui', 'tsf-ays', 'tsf-pt' ];
+
+	/**
 	 * {@inheritDoc}
 	 */
 	public function get_slug(): string {
@@ -45,11 +52,13 @@ class TSF extends AbstractEngine {
 	public function disable_native_editor_ui(): void {
 		add_filter( 'the_seo_framework_seobox_output', '__return_false' );
 		add_filter( 'the_seo_framework_register_scripts', [ $this, 'skip_post_editor_scripts' ] );
+		add_filter( 'the_seo_framework_scripts', [ $this, 'keep_primary_term_scripts' ] );
 	}
 
 	/**
-	 * Stops TSF loading its scripts on post edit screens. They drive the removed metabox and throw
-	 * when its fields are missing; other admin screens keep them.
+	 * Stops TSF loading its scripts in the block editor. They drive the removed metabox and throw
+	 * when its fields are missing, and the editor's own SEO panel and primary term picker take
+	 * their place; other admin screens keep them.
 	 *
 	 * @param  bool $register Whether TSF registers its admin scripts.
 	 * @return bool
@@ -57,11 +66,34 @@ class TSF extends AbstractEngine {
 	public function skip_post_editor_scripts( $register ) {
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 
-		if ( $screen instanceof \WP_Screen && 'post' === $screen->base ) {
+		if ( $screen instanceof \WP_Screen && 'post' === $screen->base && $screen->is_block_editor() ) {
 			return false;
 		}
 
 		return $register;
+	}
+
+	/**
+	 * On classic post edit screens, keeps only TSF's primary term selector and the scripts it
+	 * depends on. The other post editor scripts drive the removed metabox and throw when its
+	 * fields are missing.
+	 *
+	 * @param  mixed $scripts TSF's script and stylesheet definitions.
+	 * @return mixed
+	 */
+	public function keep_primary_term_scripts( $scripts ) {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( ! is_array( $scripts ) || ! $screen instanceof \WP_Screen || 'post' !== $screen->base || $screen->is_block_editor() ) {
+			return $scripts;
+		}
+
+		return array_values(
+			array_filter(
+				$scripts,
+				static fn( $script ) => is_array( $script ) && in_array( $script['id'] ?? '', self::PRIMARY_TERM_SCRIPTS, true )
+			)
+		);
 	}
 
 	/**
