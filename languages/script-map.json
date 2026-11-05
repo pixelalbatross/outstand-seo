@@ -1,0 +1,11 @@
+{
+	"src/js/blocks/breadcrumbs/index.js": "build/js/breadcrumbs.js",
+	"src/js/editor/analysis/AnalysisPanel.js": "build/js/editor.js",
+	"src/js/editor/analysis/checks.js": "build/js/editor.js",
+	"src/js/editor/components/CharCount.js": "build/js/editor.js",
+	"src/js/editor/index.js": "build/js/editor.js",
+	"src/js/editor/panels/GeneralPanel.js": "build/js/editor.js",
+	"src/js/editor/panels/SocialPanel.js": "build/js/editor.js",
+	"src/js/editor/panels/VisibilityPanel.js": "build/js/editor.js",
+	"src/js/editor/primary-term.js": "build/js/editor.js"
+}

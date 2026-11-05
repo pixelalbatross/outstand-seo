@@ -32,6 +32,8 @@ class Plugin {
 	 */
 	public function enable(): void {
 
+		add_action( 'init', [ $this, 'load_textdomain' ], 1 );
+
 		$modules = [
 			new EditorBridge(),
 			new Assets(),
@@ -45,5 +47,14 @@ class Plugin {
 				$module->register();
 			}
 		}
+	}
+
+	/**
+	 * Load the plugin's PHP translations from its languages folder.
+	 *
+	 * @return void
+	 */
+	public function load_textdomain(): void {
+		load_plugin_textdomain( 'outstand-seo', false, dirname( OUTSTAND_SEO_BASENAME ) . '/languages' );
 	}
 }

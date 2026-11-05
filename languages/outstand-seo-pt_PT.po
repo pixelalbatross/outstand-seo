@@ -1,0 +1,381 @@
+# Copyright (C) 2026 Outstand
+# This file is distributed under the GPL-3.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Outstand SEO 1.4.2\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/outstand-seo\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Language: pt_PT\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-11-05T00:21:51+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: outstand-seo\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. Plugin Name of the plugin
+#: plugin.php
+msgid "Outstand SEO"
+msgstr "Outstand SEO"
+
+#. Plugin URI of the plugin
+#: plugin.php
+msgid "https://outstand.site/?utm_source=wp-plugins&utm_medium=outstand-seo&utm_campaign=plugin-uri"
+msgstr "https://outstand.site/?utm_source=wp-plugins&utm_medium=outstand-seo&utm_campaign=plugin-uri"
+
+#. Description of the plugin
+#: plugin.php
+msgid "One block-editor SEO UI, powered by your engine in the background."
+msgstr "Uma interface de SEO no editor de blocos, com o seu motor de SEO a trabalhar em segundo plano."
+
+#. Author of the plugin
+#: plugin.php
+msgid "Outstand"
+msgstr "Outstand"
+
+#. Author URI of the plugin
+#: plugin.php
+msgid "https://outstand.site/?utm_source=wp-plugins&utm_medium=outstand-seo&utm_campaign=author-uri"
+msgstr "https://outstand.site/?utm_source=wp-plugins&utm_medium=outstand-seo&utm_campaign=author-uri"
+
+#: includes/EditorBridge.php:111
+msgid "You are not allowed to edit SEO data for this post."
+msgstr "Não tem permissão para editar os dados de SEO deste artigo."
+
+#: includes/EditorBridge.php:215
+msgid "Outstand SEO needs a supported SEO engine active: The SEO Framework or Yoast SEO."
+msgstr "O Outstand SEO precisa de um motor de SEO suportado e activo: The SEO Framework ou Yoast SEO."
+
+#: src/js/blocks/breadcrumbs/index.js:29
+msgid "The SEO Framework"
+msgstr "The SEO Framework"
+
+#: src/js/blocks/breadcrumbs/index.js:30
+msgid "Yoast SEO"
+msgstr "Yoast SEO"
+
+#: src/js/blocks/breadcrumbs/index.js:40
+msgid "Separator"
+msgstr "Separador"
+
+#: src/js/blocks/breadcrumbs/index.js:41
+msgid "Show home breadcrumb"
+msgstr "Mostrar a página inicial nos breadcrumbs"
+
+#: src/js/blocks/breadcrumbs/index.js:42
+msgid "Show current breadcrumb"
+msgstr "Mostrar a página actual nos breadcrumbs"
+
+#: src/js/blocks/breadcrumbs/index.js:43
+msgid "Show on homepage"
+msgstr "Mostrar na página inicial"
+
+#: src/js/blocks/breadcrumbs/index.js:44
+msgid "Prefer taxonomy terms"
+msgstr "Preferir termos de taxonomia"
+
+#: src/js/blocks/breadcrumbs/index.js:88
+#: src/js/editor/index.js:37
+msgid "SEO"
+msgstr "SEO"
+
+#: src/js/blocks/breadcrumbs/index.js:91
+msgid "Home label"
+msgstr "Texto da página inicial"
+
+#: src/js/blocks/breadcrumbs/index.js:92
+msgid "Override the first crumb label. Leave empty for the engine default."
+msgstr "Substitui o texto da primeira ligação. Deixe em branco para usar o texto por omissão do motor de SEO."
+
+#. translators: %1$s: active SEO engine name. %2$s: comma-separated control names.
+#: src/js/blocks/breadcrumbs/index.js:108
+#, js-format
+msgid "The following controls are not supported by %1$s: %2$s."
+msgstr "Os seguintes controlos não são suportados pelo %1$s: %2$s."
+
+#: src/js/editor/analysis/AnalysisPanel.js:53
+msgid "Focus keyphrase"
+msgstr "Frase-chave principal"
+
+#. translators: %d: SEO score out of 100.
+#: src/js/editor/analysis/AnalysisPanel.js:65
+#, js-format
+msgid "Overall score: %d/100"
+msgstr "Pontuação global: %d/100"
+
+#: src/js/editor/analysis/checks.js:46
+msgid "Set a focus keyphrase to run checks."
+msgstr "Defina uma frase-chave principal para fazer as verificações."
+
+#: src/js/editor/analysis/checks.js:52
+msgid "Keyphrase appears in the SEO title."
+msgstr "A frase-chave aparece no título SEO."
+
+#: src/js/editor/analysis/checks.js:57
+msgid "Keyphrase appears in the meta description."
+msgstr "A frase-chave aparece na meta descrição."
+
+#: src/js/editor/analysis/checks.js:65
+msgid "Keyphrase appears in the URL slug."
+msgstr "A frase-chave aparece no slug do URL."
+
+#: src/js/editor/analysis/checks.js:70
+msgid "Keyphrase appears in the content."
+msgstr "A frase-chave aparece no conteúdo."
+
+#. translators: %d: word count.
+#: src/js/editor/analysis/checks.js:79
+#, js-format
+msgid "Content length: %d words (aim for 300+)."
+msgstr "Tamanho do conteúdo: %d palavras (o ideal é 300 ou mais)."
+
+#. translators: %d: character count.
+#: src/js/editor/analysis/checks.js:90
+#, js-format
+msgid "SEO title length: %d chars (30–60)."
+msgstr "Tamanho do título SEO: %d caracteres (30–60)."
+
+#. translators: %d: character count.
+#: src/js/editor/analysis/checks.js:101
+#, js-format
+msgid "Meta description length: %d chars (120–160)."
+msgstr "Tamanho da meta descrição: %d caracteres (120–160)."
+
+#: src/js/editor/analysis/checks.js:109
+msgid "Content contains at least one link."
+msgstr "O conteúdo tem pelo menos uma ligação."
+
+#. translators: 1: current character count, 2: recommended max.
+#: src/js/editor/components/CharCount.js:30
+#, js-format
+msgid "%1$d / %2$d characters"
+msgstr "%1$d / %2$d caracteres"
+
+#: src/js/editor/index.js:51
+msgid "General"
+msgstr "Geral"
+
+#: src/js/editor/index.js:57
+msgid "Social"
+msgstr "Social"
+
+#: src/js/editor/index.js:63
+msgid "Visibility"
+msgstr "Visibilidade"
+
+#: src/js/editor/index.js:72
+msgid "SEO Analysis"
+msgstr "Análise SEO"
+
+#: src/js/editor/panels/GeneralPanel.js:28
+msgid "Meta Title"
+msgstr "Meta título"
+
+#: src/js/editor/panels/GeneralPanel.js:32
+msgid "Overrides the title shown for this page in search results."
+msgstr "Substitui o título desta página nos resultados de pesquisa."
+
+#: src/js/editor/panels/GeneralPanel.js:48
+msgid "Remove the site title?"
+msgstr "Remover o título do site?"
+
+#: src/js/editor/panels/GeneralPanel.js:49
+msgid "Enable to drop the site name and arrange the title parts yourself."
+msgstr "Active para retirar o nome do site e organizar as partes do título à sua maneira."
+
+#: src/js/editor/panels/GeneralPanel.js:61
+msgid "Meta Description"
+msgstr "Meta descrição"
+
+#: src/js/editor/panels/GeneralPanel.js:65
+msgid "Overrides the summary shown beneath the title in search results."
+msgstr "Substitui o resumo mostrado por baixo do título nos resultados de pesquisa."
+
+#: src/js/editor/panels/SocialPanel.js:16
+msgid "Default (from settings)"
+msgstr "Por omissão (das opções)"
+
+#: src/js/editor/panels/SocialPanel.js:17
+msgid "Summary"
+msgstr "Resumo"
+
+#: src/js/editor/panels/SocialPanel.js:19
+msgid "Summary with large image"
+msgstr "Resumo com imagem grande"
+
+#: src/js/editor/panels/SocialPanel.js:78
+msgid "Remove image"
+msgstr "Remover imagem"
+
+#: src/js/editor/panels/SocialPanel.js:98
+msgid "Social Image"
+msgstr "Imagem para redes sociais"
+
+#: src/js/editor/panels/SocialPanel.js:99
+msgid "Use a 1.91:1 image at least 1200px wide for reliable results across networks."
+msgstr "Use uma imagem com proporção 1,91:1 e pelo menos 1200px de largura para bons resultados em todas as redes."
+
+#: src/js/editor/panels/SocialPanel.js:109
+msgid "Open Graph Title"
+msgstr "Título Open Graph"
+
+#: src/js/editor/panels/SocialPanel.js:113
+msgid "Title shown when this page is shared on Facebook, LinkedIn, and other networks."
+msgstr "Título mostrado quando esta página é partilhada no Facebook, LinkedIn e outras redes."
+
+#: src/js/editor/panels/SocialPanel.js:130
+msgid "Open Graph Description"
+msgstr "Descrição Open Graph"
+
+#: src/js/editor/panels/SocialPanel.js:134
+msgid "Description shown when this page is shared on Facebook, LinkedIn, and other networks."
+msgstr "Descrição mostrada quando esta página é partilhada no Facebook, LinkedIn e outras redes."
+
+#: src/js/editor/panels/SocialPanel.js:150
+msgid "Twitter Title"
+msgstr "Título para o Twitter"
+
+#: src/js/editor/panels/SocialPanel.js:154
+msgid "Title shown when this page is shared on X (Twitter). Falls back to the Open Graph title."
+msgstr "Título mostrado quando esta página é partilhada no X (Twitter). Se estiver vazio, usa o título Open Graph."
+
+#: src/js/editor/panels/SocialPanel.js:171
+msgid "Twitter Description"
+msgstr "Descrição para o Twitter"
+
+#: src/js/editor/panels/SocialPanel.js:175
+msgid "Description shown when this page is shared on X (Twitter). Falls back to the Open Graph description."
+msgstr "Descrição mostrada quando esta página é partilhada no X (Twitter). Se estiver vazia, usa a descrição Open Graph."
+
+#: src/js/editor/panels/SocialPanel.js:189
+msgid "Twitter Image"
+msgstr "Imagem para o Twitter"
+
+#: src/js/editor/panels/SocialPanel.js:195
+msgid "Twitter Card Type"
+msgstr "Tipo de cartão do Twitter"
+
+#: src/js/editor/panels/SocialPanel.js:199
+msgid "Sets how the preview looks on X and platforms like Discord: a small thumbnail or a large cover image."
+msgstr "Define o aspecto da pré-visualização no X e em plataformas como o Discord: uma miniatura pequena ou uma imagem de capa grande."
+
+#: src/js/editor/panels/VisibilityPanel.js:25
+msgid "Indexing"
+msgstr "Indexação"
+
+#: src/js/editor/panels/VisibilityPanel.js:26
+msgid "Index"
+msgstr "Indexar"
+
+#: src/js/editor/panels/VisibilityPanel.js:27
+msgid "No-index"
+msgstr "Não indexar"
+
+#: src/js/editor/panels/VisibilityPanel.js:28
+msgid "Whether search engines may list this page in their results."
+msgstr "Se os motores de pesquisa podem mostrar esta página nos resultados."
+
+#: src/js/editor/panels/VisibilityPanel.js:35
+msgid "Link following"
+msgstr "Seguimento de ligações"
+
+#: src/js/editor/panels/VisibilityPanel.js:36
+msgid "Follow"
+msgstr "Seguir"
+
+#: src/js/editor/panels/VisibilityPanel.js:37
+msgid "No-follow"
+msgstr "Não seguir"
+
+#: src/js/editor/panels/VisibilityPanel.js:38
+msgid "Whether search engines may follow the links on this page."
+msgstr "Se os motores de pesquisa podem seguir as ligações desta página."
+
+#: src/js/editor/panels/VisibilityPanel.js:45
+msgid "Archiving"
+msgstr "Arquivamento"
+
+#: src/js/editor/panels/VisibilityPanel.js:46
+msgid "Archive"
+msgstr "Arquivar"
+
+#: src/js/editor/panels/VisibilityPanel.js:47
+msgid "No-archive"
+msgstr "Não arquivar"
+
+#: src/js/editor/panels/VisibilityPanel.js:48
+msgid "Whether search engines may keep a cached copy of this page."
+msgstr "Se os motores de pesquisa podem guardar uma cópia em cache desta página."
+
+#: src/js/editor/panels/VisibilityPanel.js:78
+msgid "Default"
+msgstr "Por omissão"
+
+#: src/js/editor/panels/VisibilityPanel.js:128
+msgid "Canonical URL"
+msgstr "URL canónico"
+
+#: src/js/editor/panels/VisibilityPanel.js:132
+msgid "Point search engines to this URL as the preferred version of the page."
+msgstr "Indica aos motores de pesquisa este URL como a versão preferida da página."
+
+#: src/js/editor/panels/VisibilityPanel.js:143
+msgid "Robots Meta Settings"
+msgstr "Opções de meta robots"
+
+#: src/js/editor/panels/VisibilityPanel.js:146
+msgid "Tell search engines whether to index this page, follow its links, or keep a cached copy."
+msgstr "Indica aos motores de pesquisa se podem indexar esta página, seguir as ligações ou guardar uma cópia em cache."
+
+#: src/js/editor/panels/VisibilityPanel.js:156
+msgid "No image index"
+msgstr "Não indexar imagens"
+
+#: src/js/editor/panels/VisibilityPanel.js:157
+msgid "Stop search engines from indexing images on this page."
+msgstr "Impede os motores de pesquisa de indexar as imagens desta página."
+
+#: src/js/editor/panels/VisibilityPanel.js:164
+msgid "No snippet"
+msgstr "Sem fragmento"
+
+#: src/js/editor/panels/VisibilityPanel.js:165
+msgid "Stop search engines from showing a text snippet or preview for this page."
+msgstr "Impede os motores de pesquisa de mostrar um fragmento de texto ou uma pré-visualização desta página."
+
+#: src/js/editor/panels/VisibilityPanel.js:174
+msgid "Archive Settings"
+msgstr "Opções de arquivo"
+
+#: src/js/editor/panels/VisibilityPanel.js:178
+msgid "Hide this page from this site's search results."
+msgstr "Esconder esta página dos resultados de pesquisa deste site."
+
+#: src/js/editor/panels/VisibilityPanel.js:185
+msgid "Hide this page from this site's archive listings."
+msgstr "Esconder esta página das listagens de arquivo deste site."
+
+#: src/js/editor/panels/VisibilityPanel.js:193
+msgid "Cornerstone content"
+msgstr "Conteúdo fundamental"
+
+#: src/js/editor/panels/VisibilityPanel.js:194
+msgid "Mark this as one of your most important, in-depth pages on its topic — a pillar you want to rank highest and link related posts to."
+msgstr "Marque esta como uma das páginas mais importantes e completas sobre o tema: um pilar que quer melhor posicionado e para o qual liga os artigos relacionados."
+
+#: src/js/editor/panels/VisibilityPanel.js:202
+msgid "301 Redirect URL"
+msgstr "URL de redireccionamento 301"
+
+#: src/js/editor/panels/VisibilityPanel.js:206
+msgid "Send visitors and search engines to a different URL."
+msgstr "Envia os visitantes e os motores de pesquisa para outro URL."
+
+#. translators: %s: taxonomy singular name (e.g. Category).
+#: src/js/editor/primary-term.js:90
+#, js-format
+msgid "Primary %s"
+msgstr "%s principal"

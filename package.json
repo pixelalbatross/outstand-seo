@@ -29,7 +29,9 @@
 		"test:unit:yoast": "wp-env run tests-cli --env-cwd='wp-content/plugins/outstand-seo' env OUTSTAND_SEO_TEST_ENGINE=yoast vendor/bin/phpunit --testsuite=default",
 		"test:unit:all": "npm run test:unit && npm run test:unit:tsf && npm run test:unit:yoast",
 		"test:js": "wp-scripts test-unit-js",
-		"makepot": "wp i18n make-pot . languages/outstand-seo.pot --slug=outstand-seo --exclude=vendor,node_modules,build,tests,docs"
+		"makepot": "wp i18n make-pot . languages/outstand-seo.pot --slug=outstand-seo --exclude=vendor,node_modules,build,tests,docs",
+		"makejson": "wp i18n make-json languages --no-purge --use-map=languages/script-map.json",
+		"makephp": "wp i18n make-php languages"
 	},
 	"engines": {
 		"node": ">=20.0.0",
