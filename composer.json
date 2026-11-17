@@ -1,6 +1,6 @@
 {
 	"name": "outstand/seo",
-	"description": "One block-editor SEO UI, powered by your engine in the background.",
+	"description": "Edit SEO data from one block editor sidebar, while the active SEO plugin renders the front end. Supports The SEO Framework and Yoast SEO.",
 	"type": "wordpress-plugin",
 	"license": "GPL-3.0-or-later",
 	"authors": [

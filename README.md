@@ -1,6 +1,6 @@
 # Outstand SEO
 
-> One block-editor SEO UI, powered by your engine in the background.
+> Edit SEO data from one block editor sidebar, while the active SEO plugin renders the front end. Supports The SEO Framework and Yoast SEO.
 
 ## Description
 

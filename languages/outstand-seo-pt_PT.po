@@ -28,8 +28,8 @@ msgstr "https://outstand.site/?utm_source=wp-plugins&utm_medium=outstand-seo&utm
 
 #. Description of the plugin
 #: plugin.php
-msgid "One block-editor SEO UI, powered by your engine in the background."
-msgstr "Uma interface de SEO no editor de blocos, com o seu motor de SEO a trabalhar em segundo plano."
+msgid "Edit SEO data from one block editor sidebar, while the active SEO plugin renders the front end. Supports The SEO Framework and Yoast SEO."
+msgstr "Edita os dados de SEO numa única barra lateral do editor de blocos, enquanto o plugin de SEO activo gera a parte pública do site. Suporta o The SEO Framework e o Yoast SEO."
 
 #. Author of the plugin
 #: plugin.php

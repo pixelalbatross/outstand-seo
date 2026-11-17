@@ -2,7 +2,7 @@
 /**
  * @wordpress-plugin
  * Plugin Name:       Outstand SEO
- * Description:       One block-editor SEO UI, powered by your engine in the background.
+ * Description:       Edit SEO data from one block editor sidebar, while the active SEO plugin renders the front end. Supports The SEO Framework and Yoast SEO.
  * Plugin URI:        https://outstand.site/?utm_source=wp-plugins&utm_medium=outstand-seo&utm_campaign=plugin-uri
  * Requires at least: 6.7
  * Requires PHP:      8.2

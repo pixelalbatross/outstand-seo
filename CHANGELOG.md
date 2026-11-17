@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- The plugin description now says that one block editor sidebar edits the SEO
+  data while the active SEO plugin renders the front end, and names The SEO
+  Framework and Yoast SEO as the supported plugins. The European Portuguese
+  translation includes the new description.
+
 ## [1.4.3] - 2026-11-05
 
 ### Added

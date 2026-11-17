@@ -26,7 +26,7 @@ msgstr ""
 
 #. Description of the plugin
 #: plugin.php
-msgid "One block-editor SEO UI, powered by your engine in the background."
+msgid "Edit SEO data from one block editor sidebar, while the active SEO plugin renders the front end. Supports The SEO Framework and Yoast SEO."
 msgstr ""
 
 #. Author of the plugin
